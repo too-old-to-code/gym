@@ -18,7 +18,7 @@ Open `http://127.0.0.1:8080/`.
 python3 tests/check_dashboard.py
 ```
 
-The script checks the workout copy, slate colors, relative asset path, and the absence of loads, rests, scripts, and animation. When Google Chrome is installed it also renders `1920×1080`, `1512×982`, `1366×768`, and `1440×810` side by side, plus stacked `390×844` and `360×740`.
+The script checks the workout copy, slate colors, relative asset path, and the absence of loads, rests, scripts, and animation. When Google Chrome is installed it also renders side-by-side `1920×1080`, `1512×982`, `1366×768`, `1440×810`, `901×1080`, `1024×1366`, and `901×768`, plus stacked `390×844` and `360×740`.
 
 ## GitHub Pages
 

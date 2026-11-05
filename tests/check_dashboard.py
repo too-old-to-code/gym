@@ -430,10 +430,13 @@ def check_layout(shot_dir: pathlib.Path | None) -> None:
         browser = WebSocket(debugger_url(debug_port))
         page = open_page(browser, f"http://127.0.0.1:{http_port}/index.html")
         cases = [
-            {"name": "1920x1080", "width": 1920, "height": 1080, "side_by_side": True, "vertical_fit": True, "shot": True},
-            {"name": "1512x982", "width": 1512, "height": 982, "side_by_side": True, "vertical_fit": True, "shot": True},
-            {"name": "1366x768", "width": 1366, "height": 768, "side_by_side": True, "vertical_fit": True, "shot": True},
-            {"name": "1440x810", "width": 1440, "height": 810, "side_by_side": True, "vertical_fit": True, "shot": False},
+            {"name": "1920x1080", "width": 1920, "height": 1080, "side_by_side": True, "vertical_fit": True, "full_height": True, "shot": True},
+            {"name": "1512x982", "width": 1512, "height": 982, "side_by_side": True, "vertical_fit": True, "full_height": True, "shot": True},
+            {"name": "1366x768", "width": 1366, "height": 768, "side_by_side": True, "vertical_fit": True, "full_height": True, "shot": True},
+            {"name": "1440x810", "width": 1440, "height": 810, "side_by_side": True, "vertical_fit": True, "full_height": True, "shot": False},
+            {"name": "901x1080", "width": 901, "height": 1080, "side_by_side": True, "vertical_fit": True, "full_height": False, "shot": True},
+            {"name": "1024x1366", "width": 1024, "height": 1366, "side_by_side": True, "vertical_fit": True, "full_height": False, "shot": True},
+            {"name": "901x768", "width": 901, "height": 768, "side_by_side": True, "vertical_fit": True, "full_height": False, "shot": True},
             {"name": "390x844", "width": 390, "height": 844, "side_by_side": False, "vertical_fit": False, "shot": True},
             {"name": "360x740", "width": 360, "height": 740, "side_by_side": False, "vertical_fit": False, "shot": False},
         ]
@@ -473,7 +476,7 @@ def check_layout(shot_dir: pathlib.Path | None) -> None:
                     errors.append(f"{label}: diagram dropped below the exercise text")
                 if abs(report["square"]["w"] - report["square"]["h"]) > 2:
                     errors.append(f"{label}: exercise panel is not square {report['square']}")
-                if report["square"]["h"] < case["height"] * 0.9:
+                if case.get("full_height") and report["square"]["h"] < case["height"] * 0.9:
                     errors.append(f"{label}: exercise panel is smaller than the display {report['square']}")
             else:
                 beside = [row for row in report["rows"] if row["figRight"] <= row["metaLeft"] + 1]
