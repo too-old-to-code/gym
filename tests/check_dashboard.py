@@ -240,12 +240,21 @@ LAYOUT_JS = r"""
   const sq = document.querySelector(".gd-sq").getBoundingClientRect();
   const rows = [...document.querySelectorAll(".gd-row")].map((el) => {
     const rect = el.getBoundingClientRect();
+    const fig = el.querySelector(".gd-fig").getBoundingClientRect();
+    const meta = el.querySelector(".gd-meta").getBoundingClientRect();
+    const separated = fig.right <= meta.left + 1 || meta.right <= fig.left + 1 || fig.bottom <= meta.top + 1 || meta.bottom <= fig.top + 1;
     return {
       top: Math.round(rect.top),
       bottom: Math.round(rect.bottom),
       left: Math.round(rect.left),
       right: Math.round(rect.right),
-      h: Math.round(rect.height)
+      h: Math.round(rect.height),
+      figTop: Math.round(fig.top),
+      figRight: Math.round(fig.right),
+      metaTop: Math.round(meta.top),
+      metaLeft: Math.round(meta.left),
+      metaBottom: Math.round(meta.bottom),
+      diagramOverlapsText: !separated
     };
   });
   const color = (selector, prop) => getComputedStyle(document.querySelector(selector))[prop];
@@ -422,6 +431,8 @@ def check_layout(shot_dir: pathlib.Path | None) -> None:
         page = open_page(browser, f"http://127.0.0.1:{http_port}/index.html")
         cases = [
             {"name": "1920x1080", "width": 1920, "height": 1080, "side_by_side": True, "vertical_fit": True, "shot": True},
+            {"name": "1512x982", "width": 1512, "height": 982, "side_by_side": True, "vertical_fit": True, "shot": True},
+            {"name": "1366x768", "width": 1366, "height": 768, "side_by_side": True, "vertical_fit": True, "shot": True},
             {"name": "1440x810", "width": 1440, "height": 810, "side_by_side": True, "vertical_fit": True, "shot": False},
             {"name": "390x844", "width": 390, "height": 844, "side_by_side": False, "vertical_fit": False, "shot": True},
             {"name": "360x740", "width": 360, "height": 740, "side_by_side": False, "vertical_fit": False, "shot": False},
@@ -451,11 +462,23 @@ def check_layout(shot_dir: pathlib.Path | None) -> None:
                 errors.append(f"{label}: side-by-side is {report['sideBySide']}")
             if report["docScrollWidth"] > case["width"] + 1:
                 errors.append(f"{label}: horizontal document overflow {report['docScrollWidth']}")
+            overlaps = [row for row in report["rows"] if row["diagramOverlapsText"]]
+            if overlaps:
+                errors.append(f"{label}: diagram overlaps exercise text {json.dumps(overlaps)}")
             if case["side_by_side"]:
+                stacked_diagram = [
+                    row for row in report["rows"] if row["figTop"] >= row["metaBottom"] - 1
+                ]
+                if stacked_diagram:
+                    errors.append(f"{label}: diagram dropped below the exercise text")
                 if abs(report["square"]["w"] - report["square"]["h"]) > 2:
                     errors.append(f"{label}: exercise panel is not square {report['square']}")
                 if report["square"]["h"] < case["height"] * 0.9:
                     errors.append(f"{label}: exercise panel is smaller than the display {report['square']}")
+            else:
+                beside = [row for row in report["rows"] if row["figRight"] <= row["metaLeft"] + 1]
+                if beside:
+                    errors.append(f"{label}: narrow layout put the diagram beside cramped text")
             if case["vertical_fit"]:
                 if report["outside"]:
                     errors.append(f"{label}: outside viewport {json.dumps(report['outside'])}")
@@ -497,8 +520,7 @@ def check_layout(shot_dir: pathlib.Path | None) -> None:
                 width, height = png_size(data)
                 if (width, height) != (case["width"], case["height"]):
                     errors.append(f"{label}: screenshot is {width}x{height}")
-                filename = "strength-a-1920x1080.png" if case["width"] == 1920 else "strength-a-390x844.png"
-                (shot_dir / filename).write_bytes(data)
+                (shot_dir / f"strength-a-{label}.png").write_bytes(data)
                 if case["width"] == 390:
                     full = screenshot(page, beyond=True)
                     (shot_dir / "strength-a-390-full.png").write_bytes(full)

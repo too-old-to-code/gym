@@ -249,7 +249,7 @@ p {
   white-space: nowrap;
 }
 
-@media (min-width: 1400px) and (min-aspect-ratio: 16/10) {
+@media (min-width: 901px) {
   .gd-root {
     flex-direction: row;
     align-items: stretch;
