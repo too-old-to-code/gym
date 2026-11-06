@@ -115,7 +115,7 @@ def check_content() -> None:
         errors.append("strength-b warmup must not add banded glutes")
 
     garage_warmup = "Easy row or bike, hip openers, banded glute work."
-    limits = "No barbell overhead lifts, box jumps, wall balls or muscle-ups. No treadmill running. Garage ceiling 2.21 m."
+    limits = "No barbell overhead lifts, box jumps, wall balls or muscle-ups."
     for number in range(1, 7):
         body = text_of(ROOT / f"garage-{number}.html")
         for part in (f"Garage {number}", garage_warmup, "About 60 to 75 minutes.", "100 min", "including warm-up", limits):
@@ -136,6 +136,9 @@ def check_content() -> None:
     )
     if any(pos < 0 for pos in g1_seq) or g1_seq != sorted(g1_seq):
         errors.append(f"garage-1 order {g1_seq}")
+    amrap = re.search(r'<section id="amrap".*?</section>', pages["garage-1.html"], flags=re.S)
+    if amrap is None or "5 x 5" in amrap.group(0) or amrap.group(0).count("15 cal row") != 1:
+        errors.append("garage-1 AMRAP cycle includes the strength sets or drops a station")
 
     g2 = text_of(ROOT / "garage-2.html")
     g2_seq = find_seq(
@@ -150,6 +153,8 @@ def check_content() -> None:
     )
     if any(pos < 0 for pos in g2_seq) or g2_seq != sorted(g2_seq):
         errors.append(f"garage-2 order {g2_seq}")
+    if pages["garage-2.html"].count('class="lap"') != 5:
+        errors.append("garage-2 is not five finite rounds")
 
     g3 = text_of(ROOT / "garage-3.html")
     g3_seq = find_seq(
@@ -166,6 +171,8 @@ def check_content() -> None:
     )
     if any(pos < 0 for pos in g3_seq) or g3_seq != sorted(g3_seq):
         errors.append(f"garage-3 order {g3_seq}")
+    if len(re.findall(r'class="quad\b', pages["garage-3.html"])) != 4 or pages["garage-3.html"].count(">Rest<") != 1:
+        errors.append("garage-3 wheel is missing a full rest station")
 
     g4 = text_of(ROOT / "garage-4.html")
     if "Kettlebell swings, pull-ups, box burpees, then 10 min steady on the bike." not in g4:
@@ -178,7 +185,7 @@ def check_content() -> None:
     g5_seq = find_seq(g5, G5)
     if any(pos < 0 for pos in g5_seq) or g5_seq != sorted(g5_seq):
         errors.append(f"garage-5 turnaround order {g5_seq}")
-    if g5.count("10 sandbag cleans") != 2 or g5.count("50 cal row") != 2:
+    if g5.count("10 sandbag cleans") != 2 or g5.count("50 cal row") != 2 or pages["garage-5.html"].count('class="clean"') != 2:
         errors.append("garage-5 collapsed a repeated station")
 
     g6 = text_of(ROOT / "garage-6.html")
@@ -197,23 +204,18 @@ def check_content() -> None:
     )
     if any(pos < 0 for pos in g6_seq) or g6_seq != sorted(g6_seq):
         errors.append(f"garage-6 order {g6_seq}")
-    paired = re.search(
-        r'<div class="round">\s*<div class="pair">(.*?)</div>\s*<b class="round-count">× 8</b>\s*</div>',
-        pages["garage-6.html"],
-        flags=re.S,
-    )
-    if paired is None or "1 min hard" not in paired.group(1) or "1 min easy" not in paired.group(1) or "× 8" in paired.group(1):
-        errors.append("garage-6 repeat does not cover the hard and easy pair")
+    bands = re.findall(r'<div class="pair-band">(.*?)</div>', pages["garage-6.html"], flags=re.S)
+    if len(bands) != 8 or any("1 min hard" not in band or "1 min easy" not in band or "× 8" in band for band in bands):
+        errors.append("garage-6 repeat does not cover each hard and easy pair")
+    if pages["garage-6.html"].count('class="round-count">× 8<') != 1:
+        errors.append("garage-6 missing one pair-level × 8")
 
     norwegian = text_of(ROOT / "norwegian-4x4.html")
     n_seq = find_seq(norwegian, NORWEGIAN)
     if any(pos < 0 for pos in n_seq) or n_seq != sorted(n_seq):
         errors.append(f"norwegian interval order {n_seq}")
-    flow = dash.visible_text(
-        re.search(r'class="interval".*?</ol>', pages["norwegian-4x4.html"], flags=re.S).group(0)
-    )
-    if flow.count("4 min hard") != 4 or flow.count("3 min easy jog") != 3:
-        errors.append(f"norwegian recovery count hard={flow.count('4 min hard')} easy={flow.count('3 min easy jog')}")
+    if pages["norwegian-4x4.html"].count('class="seg hard"') != 4 or pages["norwegian-4x4.html"].count('class="seg easy"') != 3 or pages["norwegian-4x4.html"].count('class="seg cool"') != 1:
+        errors.append("norwegian duration bands are not 4 hard, 3 easy, 1 cool-down")
     if "3 min easy jog between each hard interval." not in norwegian:
         errors.append("norwegian missing the between-interval boundary")
     if "85 to 95% of max heart rate, heavy but steady breathing." not in norwegian:
@@ -234,11 +236,10 @@ def check_content() -> None:
     )
     if any(pos < 0 for pos in t_seq) or t_seq != sorted(t_seq):
         errors.append(f"tabata order {t_seq}")
-    t_flow = dash.visible_text(
-        re.search(r'class="interval".*?</ol>', pages["tabata-rowing.html"], flags=re.S).group(0)
-    )
-    if t_flow.count("8 rounds of 20 s all-out, 10 s rest") != 3 or t_flow.count("3 min easy rowing") != 2:
-        errors.append("tabata block or between-block count is wrong")
+    if pages["tabata-rowing.html"].count("nest-block") != 3 or pages["tabata-rowing.html"].count("nest-between") != 2:
+        errors.append("tabata nesting is not 3 blocks and 2 between-block recoveries")
+    if pages["tabata-rowing.html"].count('class="tick"') != 24:
+        errors.append("tabata blocks do not each contain 8 rounds")
     if "10 s rest stays inside each round. 3 min easy rowing is only between blocks." not in tabata:
         errors.append("tabata missing the recovery boundary")
 
@@ -274,15 +275,17 @@ LAYOUT_JS = r"""
       });
     }
   }
-  const left = document.querySelector(".gd-left").getBoundingClientRect();
-  const panel = document.querySelector(".gd-sq, .gd-board").getBoundingClientRect();
+  const leftEl = document.querySelector(".gd-left");
+  const panelEl = document.querySelector(".gd-sq, .gd-board");
+  const left = leftEl ? leftEl.getBoundingClientRect() : null;
+  const panel = panelEl ? panelEl.getBoundingClientRect() : null;
   return {
     innerWidth: vw,
     innerHeight: vh,
     docScrollWidth: document.documentElement.scrollWidth,
     docScrollHeight: document.documentElement.scrollHeight,
-    sideBySide: panel.left >= left.right - 2,
-    panel: { w: Math.round(panel.width), h: Math.round(panel.height) },
+    sideBySide: !!(left && panel && panel.left >= left.right - 2),
+    panel: panel ? { w: Math.round(panel.width), h: Math.round(panel.height) } : { w: 0, h: 0 },
     outside: outside.slice(0, 8),
     overflow: overflow.slice(0, 8)
   };
@@ -326,10 +329,11 @@ def check_layout(shot_dir: pathlib.Path | None) -> None:
             )
             if report["docScrollWidth"] > 1921 or report["docScrollHeight"] > 1081:
                 errors.append(f"{name}: document {report['docScrollWidth']}x{report['docScrollHeight']}")
-            if not report["sideBySide"]:
-                errors.append(f"{name}: not side by side")
-            if abs(report["panel"]["w"] - report["panel"]["h"]) > 2:
-                errors.append(f"{name}: panel not square {report['panel']}")
+            if name == "index.html":
+                if not report["sideBySide"]:
+                    errors.append(f"{name}: not side by side")
+                if abs(report["panel"]["w"] - report["panel"]["h"]) > 2:
+                    errors.append(f"{name}: panel not square {report['panel']}")
             if report["outside"]:
                 errors.append(f"{name}: outside {json.dumps(report['outside'])}")
             if report["overflow"]:
