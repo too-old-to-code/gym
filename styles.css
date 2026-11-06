@@ -613,13 +613,27 @@ p {
   line-height: 0.95;
 }
 
-.pair em {
-  display: block;
-  margin-top: calc(0.3 * var(--u));
-  color: var(--ink-2);
-  font-style: normal;
-  font-size: clamp(16px, calc(2 * var(--u)), 28px);
+.round {
+  display: flex;
+  align-items: center;
+  gap: calc(1.2 * var(--u));
+  min-width: 0;
+  padding: calc(0.7 * var(--u));
+  border: 1px solid var(--line);
+  border-radius: 16px;
+}
+
+.round .pair {
+  flex: 1 1 auto;
+}
+
+.round-count {
+  flex: 0 0 auto;
+  color: var(--ink);
+  font-size: clamp(28px, calc(4.2 * var(--u)), 56px);
   font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
 }
 
 .nowrap {

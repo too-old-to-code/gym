@@ -197,6 +197,13 @@ def check_content() -> None:
     )
     if any(pos < 0 for pos in g6_seq) or g6_seq != sorted(g6_seq):
         errors.append(f"garage-6 order {g6_seq}")
+    paired = re.search(
+        r'<div class="round">\s*<div class="pair">(.*?)</div>\s*<b class="round-count">× 8</b>\s*</div>',
+        pages["garage-6.html"],
+        flags=re.S,
+    )
+    if paired is None or "1 min hard" not in paired.group(1) or "1 min easy" not in paired.group(1) or "× 8" in paired.group(1):
+        errors.append("garage-6 repeat does not cover the hard and easy pair")
 
     norwegian = text_of(ROOT / "norwegian-4x4.html")
     n_seq = find_seq(norwegian, NORWEGIAN)
