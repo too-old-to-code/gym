@@ -384,3 +384,273 @@ p {
     font-size: clamp(10px, calc(1.5 * var(--u)), 18px);
   }
 }
+
+.gd-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35em 0.75em;
+  margin: 0;
+  padding: 0 0.4vw;
+  font-size: clamp(12px, 1.4vh, 16px);
+  line-height: 1.35;
+}
+
+.gd-nav a {
+  color: var(--ink-2);
+  text-decoration: none;
+}
+
+.gd-nav a[aria-current="page"] {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.gd-limits {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: clamp(13px, 1.55vh, 18px);
+  line-height: 1.35;
+}
+
+.gd-board {
+  --u: min(1vh, 100vw / 142);
+  flex: 0 0 auto;
+  align-self: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: calc(1.1 * var(--u));
+  width: calc(96 * var(--u));
+  height: calc(96 * var(--u));
+  min-width: 0;
+  min-height: 0;
+  padding: calc(2.2 * var(--u));
+  overflow: hidden;
+}
+
+.stage {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  justify-content: center;
+  gap: calc(0.7 * var(--u));
+  min-height: 0;
+  margin: 0;
+  padding: calc(1.3 * var(--u)) calc(1.6 * var(--u));
+  background: var(--raised);
+  border-radius: 16px;
+}
+
+.stage h2,
+.board-kicker {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: clamp(13px, calc(1.7 * var(--u)), 22px);
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.stage p,
+.flow,
+.chip,
+.interval {
+  margin: 0;
+}
+
+.stage p,
+.flow li,
+.chip li,
+.interval li {
+  overflow-wrap: break-word;
+}
+
+.stage p {
+  font-size: clamp(18px, calc(2.5 * var(--u)), 34px);
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.arrow-svg {
+  display: block;
+  align-self: center;
+  width: calc(2.4 * var(--u));
+  height: calc(2.8 * var(--u));
+  flex: 0 0 auto;
+}
+
+.flow,
+.chip,
+.interval {
+  display: flex;
+  flex-direction: column;
+  gap: calc(0.55 * var(--u));
+  min-height: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.flow {
+  flex: 1 1 auto;
+}
+
+.flow li {
+  display: flex;
+  flex: 1 1 0;
+  align-items: center;
+  gap: calc(1 * var(--u));
+  min-height: 0;
+  font-size: clamp(16px, calc(2.2 * var(--u)), 30px);
+  font-weight: 600;
+  line-height: 1.15;
+}
+
+.flow li::before {
+  content: "";
+  width: calc(1.15 * var(--u));
+  height: calc(1.15 * var(--u));
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--c, #67e8f9);
+}
+
+.chip,
+.interval {
+  flex: 1 1 auto;
+}
+
+.chip li,
+.interval li {
+  display: flex;
+  flex: 1 1 0;
+  align-items: center;
+  min-height: 0;
+  padding: 0 calc(1.2 * var(--u));
+  border-radius: 12px;
+  font-size: clamp(16px, calc(2.15 * var(--u)), 28px);
+  font-weight: 600;
+  line-height: 1.15;
+}
+
+.chip li {
+  display: grid;
+  grid-template-columns: calc(4 * var(--u)) minmax(0, 1fr);
+  gap: calc(1 * var(--u));
+  background: var(--raised);
+}
+
+.chip .n {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: calc(3.4 * var(--u));
+  height: calc(3.4 * var(--u));
+  border-radius: 50%;
+  background: var(--c, #67e8f9);
+  color: var(--bg);
+  font-size: clamp(13px, calc(1.7 * var(--u)), 22px);
+  font-weight: 700;
+}
+
+.chip li.turn {
+  display: flex;
+  grid-template-columns: none;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed var(--line);
+  background: transparent;
+  color: var(--ink-2);
+  font-size: clamp(13px, calc(1.6 * var(--u)), 20px);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.interval li {
+  border: 1px solid var(--line);
+}
+
+.interval li.hard,
+.interval li.block {
+  background: var(--raised);
+}
+
+.interval li.easy,
+.interval li.between {
+  color: var(--ink-2);
+}
+
+.ladder,
+.emom,
+.pair {
+  display: grid;
+  gap: calc(0.8 * var(--u));
+  min-width: 0;
+}
+
+.ladder {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.emom {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.ladder div,
+.emom div,
+.pair span {
+  min-width: 0;
+  padding: calc(0.9 * var(--u));
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--bg);
+}
+
+.ladder strong,
+.pair b {
+  display: block;
+  font-size: clamp(26px, calc(4 * var(--u)), 52px);
+  line-height: 0.95;
+}
+
+.pair em {
+  display: block;
+  margin-top: calc(0.3 * var(--u));
+  color: var(--ink-2);
+  font-style: normal;
+  font-size: clamp(16px, calc(2 * var(--u)), 28px);
+  font-weight: 700;
+}
+
+.nowrap {
+  white-space: nowrap;
+}
+
+.ladder span,
+.emom span,
+.pair span {
+  display: block;
+  margin-top: calc(0.35 * var(--u));
+  color: var(--ink-2);
+  font-size: clamp(13px, calc(1.55 * var(--u)), 20px);
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.emom strong {
+  display: block;
+  margin-top: calc(0.35 * var(--u));
+  font-size: clamp(16px, calc(2 * var(--u)), 26px);
+  line-height: 1.15;
+}
+
+.pair {
+  grid-template-columns: minmax(0, 1.4fr) auto minmax(0, 1fr);
+  align-items: center;
+}
+
+.pair i {
+  color: var(--ink-2);
+  font-style: normal;
+  font-size: clamp(18px, calc(2.4 * var(--u)), 32px);
+}
