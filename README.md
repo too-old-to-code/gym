@@ -1,8 +1,8 @@
 # gym
 
-Static Strength A display for the GitHub Pages project site.
+Static training-day displays for the GitHub Pages project site.
 
-The page is `index.html` at the repository root, with `styles.css` beside it. There is no build step and no app server. The original canvas is not part of this repository.
+Strength A stays at `index.html`. The other boards are separate pages beside it: Strength B, Garage 1–6, Norwegian 4×4, and Tabata rowing. There is no build step and no app server. Links between days are relative, so the project site serves them under `/gym/`.
 
 ## Preview
 
@@ -16,6 +16,8 @@ Open `http://127.0.0.1:8080/`.
 
 ```bash
 python3 tests/check_dashboard.py
+python3 tests/check_days.py
+python3 tests/check_firebase.py
 ```
 
 The script checks the workout copy, slate colors, relative asset path, and the absence of loads, rests, scripts, and animation. When Google Chrome is installed it also renders side-by-side `1920×1080`, `1512×982`, `1366×768`, `1440×810`, `901×1080`, `1024×1366`, and `901×768`, plus stacked `390×844` and `360×740`.
@@ -24,12 +26,18 @@ The script checks the workout copy, slate colors, relative asset path, and the a
 
 Expected project URL: https://too-old-to-code.github.io/gym/
 
-Pages is not enabled yet. Files stay at the repository root so that URL serves this page, not a nested `/gym/gym/` path. Styles use a relative `styles.css` link for the same reason.
+Pages already serves `main` from the repository root at that URL. This set of day pages is not live until an authorised merge. No custom domain and no DNS change are required.
 
-After review and an authorised merge to `main`, enable Pages:
+## Firebase app
 
-1. Repository Settings → Pages.
-2. Build and deployment → Deploy from a branch.
-3. Branch `main`, folder `/ (root)`, then save.
+`firebase-init.js` loads the pinned official browser module `https://www.gstatic.com/firebasejs/13.2.0/firebase-app.js` and calls `initializeApp` with the public web config for `gym-dashboard-a8ae3`. That config is not an admin credential. Each board includes it with `<script type="module" src="firebase-init.js"></script>`, a relative path so it resolves under `/gym/`.
 
-Do not add a custom domain. No DNS change is required. The live page is then https://too-old-to-code.github.io/gym/
+The script records only whether the Firebase app object was created. It does not connect Realtime Database, Auth, Analytics, or Storage, and it does not write. `databaseURL` was not part of the supplied config and is not invented. Realtime stays `not-configured`. If the SDK cannot be loaded, the boards still render and the app is marked unavailable.
+
+A remote workout selector or live board still needs all of the following before it can work:
+
+1. The actual Realtime Database URL for this project, after the database is provisioned, passed as `databaseURL`.
+2. A chosen authorised Auth or access model for who may select a workout.
+3. Secure Realtime Database rules for that model. Rules must not be left open.
+
+No Firebase console change is made from this repository.

@@ -86,8 +86,12 @@ def check_content() -> None:
         errors.append("path /gym/gym/ is not the project root")
     if re.search(r"https?://|url\(\s*['\"]?https?:", blob, flags=re.I):
         errors.append("page must not request remote assets")
-    if re.search(r"<script\b|@keyframes|animation\s*:|transition\s*:", blob, flags=re.I):
-        errors.append("page must stay static: no script, animation, or transition")
+    init_tag = '<script type="module" src="firebase-init.js"></script>'
+    if html.count(init_tag) != 1 or html.count("<script") != 1:
+        errors.append("index.html must include only the relative firebase-init module")
+    without_init = html.replace(init_tag, "", 1)
+    if re.search(r"<script\b|@keyframes|animation\s*:|transition\s*:", without_init + "\n" + css, flags=re.I):
+        errors.append("page must stay static: no extra script, animation, or transition")
     for token in ("<button", "<input", "<form", "controls"):
         if token in html.lower():
             errors.append(f"unexpected control markup: {token}")
