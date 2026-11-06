@@ -84,7 +84,11 @@ def check_content() -> None:
             errors.append(f"{name}: base path would miss /gym/")
         if re.search(r"https?://", html, flags=re.I):
             errors.append(f"{name}: remote URL")
-        if re.search(r"<script\b|@keyframes|animation\s*:|transition\s*:", html, flags=re.I):
+        init_tag = '<script type="module" src="firebase-init.js"></script>'
+        if html.count(init_tag) != 1 or html.count("<script") != 1:
+            errors.append(f"{name}: firebase init must be the only script")
+        without_init = html.replace(init_tag, "", 1)
+        if re.search(r"<script\b|@keyframes|animation\s*:|transition\s*:", without_init, flags=re.I):
             errors.append(f"{name}: script or animation")
         for token in ("<button", "<input", "<form"):
             if token in html.lower():
