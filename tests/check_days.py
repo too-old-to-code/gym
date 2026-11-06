@@ -118,9 +118,11 @@ def check_content() -> None:
     limits = "No barbell overhead lifts, box jumps, wall balls or muscle-ups."
     for number in range(1, 7):
         body = text_of(ROOT / f"garage-{number}.html")
-        for part in (f"Garage {number}", garage_warmup, "About 60 to 75 minutes.", "100 min", "including warm-up", limits):
+        for part in (f"Garage {number}", garage_warmup, "About 60 to 75 minutes.", limits):
             if part not in body:
                 errors.append(f"garage-{number} missing {part}")
+        if "100 min" in body or "Absolute max" in body:
+            errors.append(f"garage-{number} adds a cap the plan does not state")
 
     g1 = text_of(ROOT / "garage-1.html")
     g1_seq = find_seq(
@@ -207,8 +209,8 @@ def check_content() -> None:
     bands = re.findall(r'<div class="pair-band">(.*?)</div>', pages["garage-6.html"], flags=re.S)
     if len(bands) != 8 or any("1 min hard" not in band or "1 min easy" not in band or "× 8" in band for band in bands):
         errors.append("garage-6 repeat does not cover each hard and easy pair")
-    if pages["garage-6.html"].count('class="round-count">× 8<') != 1:
-        errors.append("garage-6 missing one pair-level × 8")
+    if "× 8" in pages["garage-6.html"]:
+        errors.append("garage-6 multiplies eight drawn pairs again")
 
     norwegian = text_of(ROOT / "norwegian-4x4.html")
     n_seq = find_seq(norwegian, NORWEGIAN)
@@ -287,7 +289,39 @@ LAYOUT_JS = r"""
     sideBySide: !!(left && panel && panel.left >= left.right - 2),
     panel: panel ? { w: Math.round(panel.width), h: Math.round(panel.height) } : { w: 0, h: 0 },
     outside: outside.slice(0, 8),
-    overflow: overflow.slice(0, 8)
+    overflow: overflow.slice(0, 8),
+    cycle: (() => {
+      const nodes = [...document.querySelectorAll("#amrap .spoke")];
+      if (!nodes.length) return null;
+      const boxes = nodes.map((el) => {
+        const rect = el.getBoundingClientRect();
+        return { step: el.dataset.step, x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+      });
+      const cx = boxes.reduce((sum, box) => sum + box.x, 0) / boxes.length;
+      const cy = boxes.reduce((sum, box) => sum + box.y, 0) / boxes.length;
+      const order = boxes
+        .map((box) => {
+          const angle = Math.atan2(box.x - cx, -(box.y - cy));
+          return { step: box.step, angle: angle < 0 ? angle + Math.PI * 2 : angle };
+        })
+        .sort((a, b) => a.angle - b.angle)
+        .map((box) => box.step);
+      return order;
+    })(),
+    rest: (() => {
+      const label = document.querySelector(".quad.q4 strong");
+      const wheel = document.querySelector(".wheel");
+      if (!label || !wheel) return null;
+      const text = label.getBoundingClientRect();
+      const clock = wheel.getBoundingClientRect();
+      return {
+        text: label.textContent,
+        width: Math.round(text.width),
+        right: Math.round(text.right),
+        left: Math.round(text.left),
+        mid: Math.round(clock.left + clock.width / 2)
+      };
+    })()
   };
 })()
 """
@@ -334,6 +368,12 @@ def check_layout(shot_dir: pathlib.Path | None) -> None:
                     errors.append(f"{name}: not side by side")
                 if abs(report["panel"]["w"] - report["panel"]["h"]) > 2:
                     errors.append(f"{name}: panel not square {report['panel']}")
+            if name == "garage-1.html" and report.get("cycle") != ["row", "swings", "rings", "du"]:
+                errors.append(f"garage-1 clockwise order is {report.get('cycle')}")
+            if name == "garage-3.html":
+                rest = report.get("rest") or {}
+                if rest.get("text") != "Rest" or rest.get("width", 0) < 36 or rest.get("right", 0) >= rest.get("mid", 0) - 8:
+                    errors.append(f"garage-3 rest minute is clipped or on the clock stroke {rest}")
             if report["outside"]:
                 errors.append(f"{name}: outside {json.dumps(report['outside'])}")
             if report["overflow"]:

@@ -931,15 +931,28 @@ p {
 
 .quad {
   position: absolute;
-  width: 34%;
+  z-index: 3;
+  width: 30%;
   margin: 0;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: #fffaf1;
   text-align: center;
 }
 
-.quad.q1 { left: 63%; top: 8%; }
-.quad.q2 { left: 63%; top: 68%; }
-.quad.q3 { left: 3%; top: 68%; }
-.quad.q4 { left: 3%; top: 8%; }
+.quad h2,
+.quad p,
+.quad strong {
+  display: block;
+  overflow: visible;
+  white-space: nowrap;
+  background: #fffaf1;
+}
+
+.quad.q1 { right: 4%; top: 18%; left: auto; }
+.quad.q2 { right: 4%; bottom: 10%; top: auto; left: auto; }
+.quad.q3 { left: 4%; bottom: 10%; top: auto; }
+.quad.q4 { left: 4%; top: 18%; }
 
 .wheel-core {
   position: absolute;
