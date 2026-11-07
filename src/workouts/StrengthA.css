@@ -1,0 +1,254 @@
+/* Day 1 Strength A, laid out for a portrait display.
+   --u is 1% of the width, or of 9:16 height when the screen is wider than that. */
+
+.gd-root {
+  --bg: #263241;
+  --panel: #334155;
+  --raised: #40516a;
+  --line: #64748b;
+  --ink: #f1f5f9;
+  --ink-2: #cbd5e1;
+  --u: min(1vw, 0.5625vh);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: calc(2.2 * var(--u));
+  width: calc(100 * var(--u));
+  height: 100vh;
+  margin: 0 auto;
+  padding: calc(3 * var(--u));
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: system-ui, "Segoe UI", "Liberation Sans", Arial, Helvetica, sans-serif;
+}
+
+.gd-root *,
+.gd-root *::before,
+.gd-root *::after {
+  box-sizing: border-box;
+}
+
+.gd-root h1,
+.gd-root h2,
+.gd-root h3,
+.gd-root p {
+  margin: 0;
+}
+
+.gd-left {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  gap: calc(2.2 * var(--u));
+}
+
+.gd-label {
+  font-size: calc(2.2 * var(--u));
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+
+.gd-title {
+  margin-top: calc(1 * var(--u));
+  font-size: calc(9 * var(--u));
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.gd-lede {
+  margin-top: calc(1.2 * var(--u));
+  font-size: calc(3 * var(--u));
+  line-height: 1.25;
+  color: var(--ink-2);
+}
+
+.gd-card {
+  background: var(--panel);
+  border: calc(0.2 * var(--u)) solid var(--line);
+  border-radius: calc(2.4 * var(--u));
+}
+
+.gd-warm {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-areas:
+    "label label"
+    "clock title"
+    "clock sub";
+  align-items: center;
+  column-gap: calc(4 * var(--u));
+  row-gap: calc(1 * var(--u));
+  padding: calc(2.4 * var(--u)) calc(3 * var(--u));
+}
+
+.gd-warm > .gd-label {
+  grid-area: label;
+}
+
+.gd-clock {
+  grid-area: clock;
+  display: flex;
+  align-items: baseline;
+  gap: calc(1 * var(--u));
+}
+
+.gd-clock-num {
+  font-size: calc(14 * var(--u));
+  font-weight: 600;
+  line-height: 0.9;
+  letter-spacing: -0.04em;
+}
+
+.gd-clock-unit {
+  font-size: calc(4 * var(--u));
+  font-weight: 500;
+  color: var(--ink-2);
+}
+
+.gd-warm-title {
+  grid-area: title;
+  align-self: end;
+  font-size: calc(5 * var(--u));
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+.gd-warm-sub {
+  grid-area: sub;
+  align-self: start;
+  font-size: calc(3.4 * var(--u));
+  color: var(--ink-2);
+}
+
+.gd-notes {
+  display: flex;
+  gap: calc(2.2 * var(--u));
+}
+
+.gd-note {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: calc(2 * var(--u)) calc(2.4 * var(--u));
+  background: var(--raised);
+}
+
+.gd-stat {
+  margin-top: calc(0.6 * var(--u));
+  font-size: calc(6 * var(--u));
+  font-weight: 600;
+  line-height: 1;
+}
+
+.gd-stat-note,
+.gd-hip {
+  color: var(--ink-2);
+}
+
+.gd-stat-note {
+  margin-top: calc(0.6 * var(--u));
+  font-size: calc(2.2 * var(--u));
+}
+
+.gd-hip {
+  margin-top: calc(0.8 * var(--u));
+  font-size: calc(3 * var(--u));
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.gd-sq {
+  display: grid;
+  flex: 1 1 auto;
+  grid-template-rows: repeat(5, minmax(0, 1fr));
+  min-height: 0;
+  overflow: hidden;
+}
+
+.gd-row {
+  display: grid;
+  grid-template-columns: calc(7.5 * var(--u)) minmax(0, 36%) minmax(0, 1fr) auto;
+  grid-template-areas: "num fig meta rx";
+  align-items: center;
+  gap: calc(2 * var(--u));
+  min-width: 0;
+  padding: 0 calc(3 * var(--u));
+}
+
+.gd-row + .gd-row {
+  border-top: calc(0.2 * var(--u)) solid var(--line);
+}
+
+.gd-num,
+.gd-fig,
+.gd-meta,
+.gd-rx {
+  min-width: 0;
+}
+
+.gd-num {
+  grid-area: num;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: calc(7 * var(--u));
+  height: calc(7 * var(--u));
+  border-radius: 50%;
+  background: var(--c);
+  color: var(--bg);
+  font-size: calc(3.8 * var(--u));
+  font-weight: 700;
+}
+
+.gd-fig {
+  grid-area: fig;
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-height: calc(19 * var(--u));
+}
+
+.gd-meta {
+  grid-area: meta;
+}
+
+.gd-name {
+  font-size: calc(4.2 * var(--u));
+  font-weight: 600;
+  line-height: 1.05;
+}
+
+.gd-kit {
+  margin-top: calc(0.8 * var(--u));
+  font-size: calc(2.4 * var(--u));
+  line-height: 1.25;
+  color: var(--ink-2);
+}
+
+.gd-rx {
+  grid-area: rx;
+  line-height: 0.9;
+  text-align: right;
+}
+
+.gd-score {
+  font-size: calc(9 * var(--u));
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  white-space: nowrap;
+}
+
+.gd-times {
+  color: var(--c);
+}
+
+.gd-rx-label {
+  margin-top: calc(1 * var(--u));
+  font-size: calc(1.6 * var(--u));
+  letter-spacing: 0.14em;
+  color: var(--ink-2);
+  white-space: nowrap;
+}
