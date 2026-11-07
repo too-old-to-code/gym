@@ -1,0 +1,30 @@
+{
+  "name": "gym",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "serve": "tsx server/main.ts",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@astrojs/react": "^7.1.4",
+    "astro": "^7.4.7",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "tsx": "^4.23.15",
+    "ws": "^8.22.1"
+  },
+  "devDependencies": {
+    "@testing-library/dom": "^10.4.2",
+    "@testing-library/react": "^16.3.3",
+    "@types/node": "^26.6.6",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@types/ws": "^8.18.2",
+    "jsdom": "^29.1.1",
+    "typescript": "^7.0.2",
+    "vitest": "^5.1.0"
+  }
+}
