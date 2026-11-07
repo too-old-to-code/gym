@@ -1,0 +1,20 @@
+{
+  "users": [
+    {
+      "id": "andrew",
+      "name": "Andrew",
+      "categories": [
+        { "id": "strength", "name": "Strength", "workouts": [{ "id": "strength-a", "name": "Strength A" }] },
+        { "id": "crossfit", "name": "CrossFit", "workouts": [{ "id": "crossfit-1", "name": "CrossFit 1" }] }
+      ]
+    },
+    {
+      "id": "sam",
+      "name": "Sam",
+      "categories": [
+        { "id": "strength", "name": "Strength", "workouts": [{ "id": "strength-a", "name": "Strength A" }] },
+        { "id": "rehab", "name": "Rehab", "workouts": [{ "id": "rehab-1", "name": "Rehab 1" }] }
+      ]
+    }
+  ]
+}
