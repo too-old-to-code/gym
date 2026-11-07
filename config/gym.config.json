@@ -4,16 +4,57 @@
       "id": "andrew",
       "name": "Andrew",
       "categories": [
-        { "id": "strength", "name": "Strength", "workouts": [{ "id": "strength-a", "name": "Strength A" }] },
-        { "id": "crossfit", "name": "CrossFit", "workouts": [{ "id": "crossfit-1", "name": "CrossFit 1" }] }
+        {
+          "id": "strength",
+          "name": "Strength",
+          "workouts": [
+            { "id": "strength-a", "name": "Strength A" },
+            { "id": "strength-b", "name": "Strength B" }
+          ]
+        },
+        {
+          "id": "crossfit",
+          "name": "CrossFit",
+          "workouts": [{ "id": "crossfit-1", "name": "CrossFit 1" }]
+        }
       ]
     },
     {
-      "id": "sam",
-      "name": "Sam",
+      "id": "jelena",
+      "name": "Jelena",
       "categories": [
-        { "id": "strength", "name": "Strength", "workouts": [{ "id": "strength-a", "name": "Strength A" }] },
-        { "id": "rehab", "name": "Rehab", "workouts": [{ "id": "rehab-1", "name": "Rehab 1" }] }
+        {
+          "id": "strength",
+          "name": "Strength",
+          "workouts": [
+            { "id": "strength-a", "name": "Strength A" },
+            { "id": "strength-b", "name": "Strength B" }
+          ]
+        },
+        {
+          "id": "rehab",
+          "name": "Rehab",
+          "workouts": [{ "id": "rehab-1", "name": "Rehab 1" }]
+        }
+      ]
+    },
+    {
+      "id": "ricky",
+      "name": "Ricky",
+      "categories": [
+        {
+          "id": "strength",
+          "name": "Strength",
+          "workouts": [
+            { "id": "strength-a", "name": "Strength A" },
+            { "id": "strength-b", "name": "Strength B" }
+          ]
+        },
+        {
+          "id": "rehab",
+          "name": "Rehab",
+          "workouts": [{ "id": "rehab-1", "name": "Rehab 1" }]
+        }
       ]
     }
   ]

@@ -1,0 +1,37 @@
+/* Colours and shading for the isometric robot figures (ported from the robot-*-color.html drawings). */
+.robot-fig {
+  --body: #6fb1e8; --deck: #a4d3f5; --line: #1f2a3a; --detail: rgba(20, 35, 60, .38);
+  display: block;
+  background: #fbf8f2;
+  border-radius: calc(1.4 * var(--u, 1vw));
+  overflow: hidden;
+}
+.robot-fig svg { display: block; width: 100%; height: 100%; }
+
+.robot-fig .face { fill: var(--body); stroke: var(--line); stroke-width: 1; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
+.robot-fig .face.top { fill: var(--deck); }
+.robot-fig .detail { fill: none; stroke: var(--detail); stroke-width: 1; vector-effect: non-scaling-stroke; stroke-linecap: round; stroke-linejoin: round; }
+.robot-fig .lo { stroke: var(--line); stroke-linecap: round; fill: none; }
+.robot-fig .lf { stroke: var(--body); stroke-linecap: round; fill: none; }
+.robot-fig .eye { fill: #19d3ff; stroke: none; }
+
+.robot-fig .robot .face { fill: #9aa0a8; } .robot-fig .robot .face.side { fill: #6e747c; } .robot-fig .robot .face.top { fill: #c9cdd2; }
+.robot-fig .robot .lf { stroke: #9aa0a8; }
+.robot-fig .head .face { fill: #c4c8cd; } .robot-fig .head .face.side { fill: #9a9fa6; } .robot-fig .head .face.top { fill: #e6e8ea; }
+.robot-fig .shoe .face { fill: #4a4f56; } .robot-fig .shoe .face.side { fill: #33373d; } .robot-fig .shoe .face.top { fill: #6b7078; }
+.robot-fig .fist .face { fill: #7c828a; } .robot-fig .fist .face.side { fill: #585d64; } .robot-fig .fist .face.top { fill: #a3a8ae; }
+.robot-fig .robot .face.joint { fill: #555a61; }
+.robot-fig .robot .face.plate { fill: #2f3a52; }
+.robot-fig .robot .face.plate ~ .detail, .robot-fig .robot .detail.pd { stroke: rgba(255, 255, 255, .28); }
+.robot-fig .bar .lf { stroke: #d7dce3; } .robot-fig .bar .lo { stroke: #444b58; }
+.robot-fig .cover .face { fill: #c4c8cd; stroke: none; } .robot-fig .cover .face.side { fill: #9a9fa6; } .robot-fig .cover .face.top { fill: #e6e8ea; }
+
+/* equipment */
+.robot-fig .belt .face { fill: #8a5a35; } .robot-fig .belt .face.side { fill: #6b4226; } .robot-fig .belt .face.top { fill: #a8714a; }
+.robot-fig .belt .detail { stroke: rgba(255, 235, 200, .55); }
+.robot-fig .belt .buckle { fill: #d9c38a; stroke: var(--line); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.robot-fig .steel .face { fill: #8d98a8; } .robot-fig .steel .face.side { fill: #6a7586; } .robot-fig .steel .face.top { fill: #b4bdca; }
+.robot-fig .cushion .face { fill: #1c1d20; } .robot-fig .cushion .face.side { fill: #0e0f11; } .robot-fig .cushion .face.top { fill: #2b2d31; }
+.robot-fig .cushion .detail { stroke: rgba(255, 255, 255, .22); }
+.robot-fig .padbar .lf { stroke: #3a3f47; } .robot-fig .padbar .lo { stroke: #1f2a3a; }
+.robot-fig .rod .lf { stroke: #8d98a8; } .robot-fig .rod .lo { stroke: #44505f; }

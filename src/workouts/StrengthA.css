@@ -51,21 +51,6 @@
   color: var(--ink-2);
 }
 
-.gd-title {
-  margin-top: calc(1 * var(--u));
-  font-size: calc(9 * var(--u));
-  font-weight: 600;
-  line-height: 1;
-  letter-spacing: -0.02em;
-}
-
-.gd-lede {
-  margin-top: calc(1.2 * var(--u));
-  font-size: calc(3 * var(--u));
-  line-height: 1.25;
-  color: var(--ink-2);
-}
-
 .gd-card {
   background: var(--panel);
   border: calc(0.2 * var(--u)) solid var(--line);
@@ -122,42 +107,6 @@
   align-self: start;
   font-size: calc(3.4 * var(--u));
   color: var(--ink-2);
-}
-
-.gd-notes {
-  display: flex;
-  gap: calc(2.2 * var(--u));
-}
-
-.gd-note {
-  flex: 1 1 0;
-  min-width: 0;
-  padding: calc(2 * var(--u)) calc(2.4 * var(--u));
-  background: var(--raised);
-}
-
-.gd-stat {
-  margin-top: calc(0.6 * var(--u));
-  font-size: calc(6 * var(--u));
-  font-weight: 600;
-  line-height: 1;
-}
-
-.gd-stat-note,
-.gd-hip {
-  color: var(--ink-2);
-}
-
-.gd-stat-note {
-  margin-top: calc(0.6 * var(--u));
-  font-size: calc(2.2 * var(--u));
-}
-
-.gd-hip {
-  margin-top: calc(0.8 * var(--u));
-  font-size: calc(3 * var(--u));
-  font-weight: 500;
-  line-height: 1.2;
 }
 
 .gd-sq {

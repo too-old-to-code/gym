@@ -8,15 +8,10 @@ import { workoutRegistry } from "../../src/workouts/registry";
 afterEach(cleanup);
 
 const COPY = [
-  "Day 1 · Strength",
-  "Strength A",
-  "Five lifts, top to bottom. Finish all sets of one before the next.",
+  "All body workout: A",
   "Warm-up",
   "Easy row or bike",
   "then hip openers",
-  "100 min",
-  "including warm-up",
-  "Set the squat box where the hip is happy",
   "Squat to box",
   "Barbell · box at a hip-happy height",
   "Bench press",
