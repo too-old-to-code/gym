@@ -34,4 +34,11 @@ describe("createSelectionStore", () => {
     const trimmed: Config = { users: [{ id: "u", name: "U", categories: [] }] };
     expect(createSelectionStore(file, trimmed).get()).toBeNull();
   });
+  test("a write that fails keeps the selection in memory and does not throw", () => {
+    const dir = mkdtempSync(join(tmpdir(), "gym-store-"));
+    writeFileSync(join(dir, "blocker"), "file");
+    const store = createSelectionStore(join(dir, "blocker", "x", "state.json"), config);
+    expect(() => store.set(sel)).not.toThrow();
+    expect(store.get()).toEqual(sel);
+  });
 });

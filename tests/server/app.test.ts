@@ -1,5 +1,5 @@
-import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
-import type { AddressInfo } from "node:net";
+import { chmodSync, mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import { connect as tcpConnect, type AddressInfo } from "node:net";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { Server } from "node:http";
@@ -22,8 +22,8 @@ let staticDir: string;
 let servers: Server[] = [];
 let sockets: WebSocket[] = [];
 
-async function start(): Promise<number> {
-  const server = createGymServer({ config, stateFile, staticDir });
+async function start(extra: Partial<Parameters<typeof createGymServer>[0]> = {}): Promise<number> {
+  const server = createGymServer({ config, stateFile, staticDir, ...extra });
   servers.push(server);
   await new Promise<void>((r) => server.listen(0, r));
   return (server.address() as AddressInfo).port;
@@ -128,5 +128,80 @@ describe("gym server", () => {
     expect((await fetch(`http://localhost:${port}/nope.js`)).status).toBe(404);
     const raw = await fetch(`http://localhost:${port}/..%2f..%2fstate.json`);
     expect(raw.status).toBe(404);
+  });
+});
+
+const rawRequest = (port: number, text: string) =>
+  new Promise<string>((resolve) => {
+    const sock = tcpConnect(port, "localhost", () => sock.write(text));
+    let data = "";
+    sock.on("data", (d) => (data += d));
+    sock.on("close", () => resolve(data));
+    sock.on("error", () => resolve(data));
+    setTimeout(() => {
+      sock.destroy();
+      resolve(data);
+    }, 500);
+  });
+const alive = async (port: number) => (await fetch(`http://localhost:${port}/`)).status === 200;
+
+describe("gym server survives bad input", () => {
+  test("malformed request path gets 400 and the server stays up", async () => {
+    const port = await start();
+    const reply = await rawRequest(port, "GET // HTTP/1.1\r\nHost: x\r\nConnection: close\r\n\r\n");
+    expect(reply).toMatch(/^HTTP\/1\.1 400/);
+    expect(await alive(port)).toBe(true);
+  });
+
+  test("malformed upgrade path does not crash the server", async () => {
+    const port = await start();
+    await rawRequest(
+      port,
+      "GET // HTTP/1.1\r\nHost: x\r\nConnection: Upgrade\r\nUpgrade: websocket\r\nSec-WebSocket-Version: 13\r\nSec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\n\r\n",
+    );
+    expect(await alive(port)).toBe(true);
+  });
+
+  test("an oversized socket frame does not crash the server", async () => {
+    const port = await start();
+    const a = await connect(port);
+    await a.next();
+    a.ws.send("x".repeat(20_000));
+    await new Promise((r) => setTimeout(r, 150));
+    expect(await alive(port)).toBe(true);
+    const b = await connect(port);
+    expect(await b.next()).toEqual({ type: "state", selection: null });
+  });
+
+  test("a state file that cannot be written does not stop selections being applied", async () => {
+    writeFileSync(join(dir, "blocker"), "file");
+    stateFile = join(dir, "blocker", "nested", "state.json");
+    const port = await start();
+    const a = await connect(port);
+    await a.next();
+    select(a, sel);
+    expect(await a.next()).toEqual({ type: "state", selection: sel });
+    expect(await alive(port)).toBe(true);
+  });
+
+  test("an unreadable static file does not crash the server", async () => {
+    writeFileSync(join(staticDir, "locked.js"), "x");
+    chmodSync(join(staticDir, "locked.js"), 0o000);
+    const port = await start();
+    await fetch(`http://localhost:${port}/locked.js`).catch(() => null);
+    expect(await alive(port)).toBe(true);
+  });
+
+  test("STATIC_DIR with a trailing slash still serves files", async () => {
+    const port = await start({ staticDir: staticDir + "/" });
+    expect(await alive(port)).toBe(true);
+  });
+});
+
+describe("gym server heartbeat", () => {
+  test("clients receive periodic hb messages", async () => {
+    const a = await connect(await start({ heartbeatMs: 40 }));
+    await a.next();
+    expect(await a.next()).toEqual({ type: "hb" });
   });
 });

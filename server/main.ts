@@ -10,3 +10,5 @@ createGymServer({
   stateFile: process.env.STATE_FILE ?? "./data/state.json",
   staticDir: process.env.STATIC_DIR ?? "./dist",
 }).listen(port, () => console.log(`gym server listening on :${port}`));
+
+process.on("uncaughtException", (err) => console.error("uncaught exception:", err));

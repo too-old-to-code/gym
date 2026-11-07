@@ -1,7 +1,7 @@
 export type Selection = { userId: string; categoryId: string; workoutId: string };
 
 export type ClientMessage = { type: "select"; selection: Selection };
-export type ServerMessage = { type: "state"; selection: Selection | null };
+export type ServerMessage = { type: "state"; selection: Selection | null } | { type: "hb" };
 
 export function isSelection(value: unknown): value is Selection {
   if (typeof value !== "object" || value === null) return false;
