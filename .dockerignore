@@ -1,0 +1,10 @@
+node_modules
+dist
+.astro
+.git
+.superpowers
+data
+tests
+docs
+*.md
+robot-bench-press.html
