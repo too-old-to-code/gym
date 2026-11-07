@@ -29,6 +29,6 @@ Environment for `npm run serve`: `PORT` (8080), `STATE_FILE` (`./data/state.json
 
 Pushing to `main` runs tests, then builds and pushes `andrewt51/gym` (`latest` and the commit SHA) to Docker Hub. The container publishes no port and keeps its saved selection in the `/data` volume.
 
-It runs as the `gym` service in the Thai app's compose file (`learn-thai-webapp`, branch `gym-service`), behind its nginx at `gym.learntoreadthai.co`. Order matters, because nginx stops without the certificate: create the DNS record, issue the certificate with `./init-letsencrypt.sh gym.learntoreadthai.co`, then deploy the Thai branch. Details are in that repo's readme.
+It runs as the `gym` service in the Thai app's compose file (`learn-thai-webapp`, branch `gym-service`), behind its nginx at `gym.learntoreadthai.co`. Create the DNS record, issue the certificate with `./init-letsencrypt.sh gym.learntoreadthai.co`, then deploy the Thai branch. If the certificate is missing, nginx makes a self-signed placeholder rather than stopping. Details are in that repo's readme.
 
 The workflow needs the repo variable `DOCKERHUB_USERNAME` and the secret `DOCKERHUB_TOKEN`.
