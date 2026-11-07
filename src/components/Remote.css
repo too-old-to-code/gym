@@ -44,3 +44,12 @@
   font-weight: 500;
   text-decoration: underline;
 }
+
+.remote .offline {
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: #78350f;
+  color: #fde68a;
+  font-size: 16px;
+}

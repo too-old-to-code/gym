@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import type { Config } from "../../shared/config";
 import type { Selection } from "../../shared/protocol";
@@ -30,7 +30,11 @@ beforeEach(() => {
   socket.selection = null;
   socket.select.mockClear();
 });
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.useRealTimers();
+  vi.unstubAllGlobals();
+});
 
 const view = (selection: Selection | null = null, onSelect = vi.fn()) =>
   render(<RemoteView config={config} selection={selection} onSelect={onSelect} />);
@@ -88,7 +92,36 @@ describe("RemoteView", () => {
   });
 });
 
+describe("RemoteView connection state", () => {
+  test("shows a reconnecting notice while the socket is down", () => {
+    render(<RemoteView config={config} selection={null} onSelect={vi.fn()} connected={false} />);
+    expect(screen.getByText("Reconnecting…")).toBeTruthy();
+  });
+  test("shows no notice while connected", () => {
+    render(<RemoteView config={config} selection={null} onSelect={vi.fn()} connected />);
+    expect(screen.queryByText("Reconnecting…")).toBeNull();
+  });
+});
+
 describe("Remote", () => {
+  test("retries the config fetch after a failure", async () => {
+    vi.useFakeTimers();
+    const fetchMock = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("offline"))
+      .mockResolvedValue({ ok: true, json: async () => config });
+    vi.stubGlobal("fetch", fetchMock);
+    render(<Remote />);
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    expect(screen.queryByText("Andrew")).toBeNull();
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(5000);
+    });
+    expect(screen.getByText("Andrew")).toBeTruthy();
+  });
+
   test("fetches the config and renders the user list", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, json: async () => config })));
     render(<Remote />);

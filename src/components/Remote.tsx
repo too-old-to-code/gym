@@ -5,6 +5,7 @@ import { useGymSocket } from "../lib/useGymSocket";
 import "./Remote.css";
 
 const USER_KEY = "gym.userId";
+const CONFIG_RETRY_MS = 2000;
 
 function readSavedUser(): string | null {
   try {
@@ -23,18 +24,21 @@ function writeSavedUser(id: string | null): void {
   }
 }
 
-type ViewProps = { config: Config; selection: Selection | null; onSelect: (s: Selection) => void };
+type ViewProps = { config: Config; selection: Selection | null; onSelect: (s: Selection) => void; connected?: boolean };
 
-export function RemoteView({ config, selection, onSelect }: ViewProps) {
+export function RemoteView({ config, selection, onSelect, connected = true }: ViewProps) {
   const [savedUserId, setSavedUserId] = useState<string | null>(readSavedUser);
   const [categoryId, setCategoryId] = useState<string | null>(null);
 
   const user = config.users.find((u) => u.id === savedUserId);
   const category = user?.categories.find((c) => c.id === categoryId);
 
+  const offline = connected ? null : <p className="offline">Reconnecting…</p>;
+
   if (!user) {
     return (
       <main className="remote">
+        {offline}
         <h1>Who are you?</h1>
         {config.users.map((u) => (
           <button
@@ -67,6 +71,7 @@ export function RemoteView({ config, selection, onSelect }: ViewProps) {
   if (!category) {
     return (
       <main className="remote">
+        {offline}
         <h1>{user.name}</h1>
         {user.categories.map((c) => (
           <button key={c.id} onClick={() => setCategoryId(c.id)}>
@@ -80,6 +85,7 @@ export function RemoteView({ config, selection, onSelect }: ViewProps) {
 
   return (
     <main className="remote">
+      {offline}
       <h1>{category.name}</h1>
       {category.workouts.map((w) => {
         const current = selection?.categoryId === category.id && selection.workoutId === w.id;
@@ -102,16 +108,28 @@ export function RemoteView({ config, selection, onSelect }: ViewProps) {
 }
 
 export function Remote() {
-  const { selection, select } = useGymSocket();
+  const { selection, connected, select } = useGymSocket();
   const [config, setConfig] = useState<Config | null>(null);
 
   useEffect(() => {
-    fetch("/api/config")
-      .then((r) => r.json())
-      .then(setConfig)
-      .catch(() => setConfig(null));
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const load = () =>
+      fetch("/api/config")
+        .then((r) => r.json())
+        .then((c: Config) => {
+          if (!cancelled) setConfig(c);
+        })
+        .catch(() => {
+          if (!cancelled) timer = setTimeout(load, CONFIG_RETRY_MS);
+        });
+    load();
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
   }, []);
 
   if (!config) return <main className="remote"><p>Loading…</p></main>;
-  return <RemoteView config={config} selection={selection} onSelect={select} />;
+  return <RemoteView config={config} selection={selection} onSelect={select} connected={connected} />;
 }

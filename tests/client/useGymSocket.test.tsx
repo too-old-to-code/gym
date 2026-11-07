@@ -9,6 +9,7 @@ class FakeSocket {
   onmessage: ((e: { data: string }) => void) | null = null;
   onclose: (() => void) | null = null;
   sent: string[] = [];
+  readyState = 0;
   constructor(public url: string) {
     FakeSocket.instances.push(this);
   }
@@ -16,9 +17,11 @@ class FakeSocket {
     this.sent.push(d);
   }
   close() {
+    this.readyState = 3;
     this.onclose?.();
   }
   open() {
+    this.readyState = 1;
     this.onopen?.();
   }
   push(selection: unknown) {
@@ -27,7 +30,7 @@ class FakeSocket {
 }
 const a = { userId: "u", categoryId: "c", workoutId: "w" };
 const b = { userId: "u", categoryId: "c", workoutId: "w2" };
-const opts = () => ({ WebSocketImpl: FakeSocket as unknown as typeof WebSocket, url: "ws://test/ws" });
+const opts = (extra: { staleMs?: number } = {}) => ({ WebSocketImpl: FakeSocket as unknown as typeof WebSocket, url: "ws://test/ws", ...extra });
 
 beforeEach(() => {
   FakeSocket.instances = [];
@@ -69,5 +72,37 @@ describe("useGymSocket", () => {
     act(() => FakeSocket.instances[0].push(a));
     act(() => FakeSocket.instances[0].onmessage?.({ data: "garbage" }));
     expect(result.current.selection).toEqual(a);
+  });
+
+  test("select while the socket is not open sends nothing and does not throw", () => {
+    const { result } = renderHook(() => useGymSocket(opts()));
+    expect(() => act(() => result.current.select(a))).not.toThrow();
+    expect(FakeSocket.instances[0].sent).toEqual([]);
+  });
+
+  test("a heartbeat does not change the selection", () => {
+    const { result } = renderHook(() => useGymSocket(opts()));
+    act(() => FakeSocket.instances[0].push(a));
+    act(() => FakeSocket.instances[0].onmessage?.({ data: JSON.stringify({ type: "hb" }) }));
+    expect(result.current.selection).toEqual(a);
+  });
+
+  test("a connection that goes silent is dropped and reconnected", () => {
+    const { result } = renderHook(() => useGymSocket(opts({ staleMs: 1000 })));
+    act(() => FakeSocket.instances[0].open());
+    act(() => vi.advanceTimersByTime(2000));
+    expect(FakeSocket.instances[0].readyState).toBe(3);
+    expect(FakeSocket.instances).toHaveLength(2);
+    act(() => FakeSocket.instances[1].push(b));
+    expect(result.current.selection).toEqual(b);
+  });
+
+  test("messages keep a connection alive", () => {
+    renderHook(() => useGymSocket(opts({ staleMs: 1000 })));
+    act(() => FakeSocket.instances[0].open());
+    act(() => vi.advanceTimersByTime(800));
+    act(() => FakeSocket.instances[0].onmessage?.({ data: JSON.stringify({ type: "hb" }) }));
+    act(() => vi.advanceTimersByTime(800));
+    expect(FakeSocket.instances).toHaveLength(1);
   });
 });
