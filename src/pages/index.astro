@@ -1,12 +1,16 @@
 ---
+import { Display } from "../components/Display";
 ---
 <html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Gym</title>
+    <style is:global>
+      html, body { margin: 0; background: #1b2229; color: #e8eef2; font-family: system-ui, sans-serif; }
+    </style>
   </head>
   <body>
-    <h1>Gym</h1>
+    <Display client:only="react" />
   </body>
 </html>
