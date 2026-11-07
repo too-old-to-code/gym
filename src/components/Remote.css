@@ -1,0 +1,46 @@
+.remote {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 100vh;
+  padding: 24px 16px;
+  background: #263241;
+  color: #f1f5f9;
+  font-family: system-ui, "Segoe UI", Arial, sans-serif;
+}
+
+.remote h1 {
+  margin: 0 0 8px;
+  font-size: 28px;
+  font-weight: 600;
+}
+
+.remote button {
+  min-height: 64px;
+  padding: 0 20px;
+  border: 1px solid #64748b;
+  border-radius: 14px;
+  background: #334155;
+  color: inherit;
+  font: inherit;
+  font-size: 20px;
+  font-weight: 600;
+  text-align: left;
+}
+
+.remote button[aria-current="true"] {
+  border-color: #67e8f9;
+  background: #40516a;
+  box-shadow: inset 6px 0 0 #67e8f9;
+}
+
+.remote button.link {
+  min-height: 44px;
+  border: 0;
+  background: none;
+  color: #cbd5e1;
+  font-size: 16px;
+  font-weight: 500;
+  text-decoration: underline;
+}
