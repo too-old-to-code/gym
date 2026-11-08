@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type CSSProperties } from "react";
 import * as squat from "./squat";
 import * as bench from "./bench";
 import * as pullup from "./pullup";
@@ -21,6 +21,14 @@ const movements = {
 };
 
 export type Movement = keyof typeof movements;
+
+// Outline width in drawing units, so lines stay about 1px at the intended size. Cheaper than
+// vector-effect: non-scaling-stroke, which makes the browser recompute every stroke each frame.
+const TARGET_HEIGHT_PX = 205;
+const strokeFor = (viewBox: string) => Number(viewBox.split(" ")[3]) / TARGET_HEIGHT_PX;
+
+// A Pi cannot redraw the scene at 60fps; ~30fps looks fine and halves the work.
+const FRAME_MS = 33;
 
 type Props = {
   movement: Movement;
@@ -50,12 +58,16 @@ export function RobotFigure({ movement, load, restMs = 1200, startDelayMs = 0, p
     if (!playing) return;
 
     let raf = 0;
+    let last = 0;
     let nextRep = performance.now() + startDelayMs;
     const frame = (now: number) => {
       if (robot.busy()) {
-        robot.step(now);
-        g.innerHTML = robot.scene();
-        if (!robot.busy()) nextRep = now + restMs;
+        if (now - last >= FRAME_MS) {
+          last = now;
+          robot.step(now);
+          g.innerHTML = robot.scene();
+          if (!robot.busy()) nextRep = now + restMs;
+        }
       } else if (now >= nextRep) {
         robot.rep();
       }
@@ -67,7 +79,7 @@ export function RobotFigure({ movement, load, restMs = 1200, startDelayMs = 0, p
 
   return (
     <div className={`robot-fig${className ? ` ${className}` : ""}`}>
-      <svg viewBox={viewBox} role="img" aria-label={`${label} movement diagram`}>
+      <svg viewBox={viewBox} style={{ "--sw": strokeFor(viewBox) } as CSSProperties} role="img" aria-label={`${label} movement diagram`}>
         <g ref={stage} />
       </svg>
     </div>
