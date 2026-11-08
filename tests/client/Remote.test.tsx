@@ -50,15 +50,15 @@ describe("RemoteView", () => {
     view();
     fireEvent.click(screen.getByText("Andrew"));
     expect(localStorage.getItem("gym.userId")).toBe("andrew");
-    expect(screen.getByText("Strength")).toBeTruthy();
-    expect(screen.getByText("Rehab")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Strength" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Rehab" })).toBeTruthy();
   });
 
   test("a saved user skips the user list", () => {
     localStorage.setItem("gym.userId", "sam");
     view();
     expect(screen.queryByText("Andrew")).toBeNull();
-    expect(screen.getByText("Rehab")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Rehab" })).toBeTruthy();
   });
 
   test("a saved user missing from the config returns to the user list", () => {
@@ -75,20 +75,50 @@ describe("RemoteView", () => {
     expect(screen.getByText("Andrew")).toBeTruthy();
   });
 
+  test("lists a user's categories as accordion headers", () => {
+    localStorage.setItem("gym.userId", "andrew");
+    view();
+    expect(screen.getByRole("button", { name: "Strength" }).getAttribute("aria-expanded")).toBe("true");
+    expect(screen.getByRole("button", { name: "Rehab" }).getAttribute("aria-expanded")).toBe("false");
+  });
+
+  test("opens the first section by default when nothing is on the screen", () => {
+    localStorage.setItem("gym.userId", "andrew");
+    view();
+    expect(screen.getByText("Strength A")).toBeTruthy();
+    expect(screen.queryByText("Rehab 1")).toBeNull();
+  });
+
+  test("tapping a header opens that section and closes the other", () => {
+    localStorage.setItem("gym.userId", "andrew");
+    view();
+    fireEvent.click(screen.getByRole("button", { name: "Rehab" }));
+    expect(screen.getByText("Rehab 1")).toBeTruthy();
+    expect(screen.queryByText("Strength A")).toBeNull();
+  });
+
+  test("tapping the open header closes it", () => {
+    localStorage.setItem("gym.userId", "andrew");
+    view();
+    fireEvent.click(screen.getByRole("button", { name: "Strength" }));
+    expect(screen.queryByText("Strength A")).toBeNull();
+  });
+
   test("tapping a workout sends the three ids", () => {
     localStorage.setItem("gym.userId", "andrew");
     const onSelect = vi.fn();
     view(null, onSelect);
-    fireEvent.click(screen.getByText("Strength"));
     fireEvent.click(screen.getByText("Strength A"));
     expect(onSelect).toHaveBeenCalledWith({ userId: "andrew", categoryId: "strength", workoutId: "strength-a" });
   });
 
-  test("the workout on the screen is marked current", () => {
+  test("the section holding the workout on the screen opens and is marked current", () => {
     localStorage.setItem("gym.userId", "andrew");
-    view({ userId: "sam", categoryId: "strength", workoutId: "strength-a" });
-    fireEvent.click(screen.getByText("Strength"));
-    expect(screen.getByText("Strength A").closest("button")?.getAttribute("aria-current")).toBe("true");
+    view({ userId: "sam", categoryId: "rehab", workoutId: "rehab-1" });
+    const workout = screen.getByText("Rehab 1").closest("button");
+    expect(workout?.getAttribute("aria-current")).toBe("true");
+    expect(screen.getByText("On screen")).toBeTruthy();
+    expect(screen.queryByText("Strength A")).toBeNull();
   });
 });
 
