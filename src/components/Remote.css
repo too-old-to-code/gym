@@ -1,12 +1,14 @@
 .remote {
-  --ink: #0f172a;
+  --ink: #262a2c;
+  --line: #4f646f;
+  --card: #dee7e7;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
   gap: 14px;
   min-height: 100vh;
   padding: max(20px, env(safe-area-inset-top)) 16px max(24px, env(safe-area-inset-bottom));
-  background: #fff7e8;
+  background: #f4faff;
   color: var(--ink);
   font-family: system-ui, "Segoe UI", Arial, sans-serif;
   -webkit-tap-highlight-color: transparent;
@@ -42,7 +44,7 @@
   padding: 0 4px;
   border: 0;
   background: none;
-  color: #475569;
+  color: #4f646f;
   font-size: 16px;
   font-weight: 600;
   text-decoration: underline;
@@ -58,10 +60,11 @@
 .remote .person {
   min-height: 84px;
   padding: 0 24px;
-  border: 3px solid var(--ink);
+  border: 3px solid var(--line);
   border-radius: 22px;
   background: var(--accent);
-  box-shadow: 0 5px 0 var(--ink);
+  color: var(--accent-ink);
+  box-shadow: 0 5px 0 var(--line);
   font-size: 28px;
   font-weight: 800;
   text-align: left;
@@ -69,7 +72,7 @@
 
 .remote .person:active {
   transform: translateY(4px);
-  box-shadow: 0 1px 0 var(--ink);
+  box-shadow: 0 1px 0 var(--line);
 }
 
 /* accordion */
@@ -81,10 +84,10 @@
 
 .section {
   overflow: hidden;
-  border: 3px solid var(--ink);
+  border: 3px solid var(--line);
   border-radius: 22px;
-  background: #fff;
-  box-shadow: 0 5px 0 var(--ink);
+  background: var(--card);
+  box-shadow: 0 5px 0 var(--line);
 }
 
 .remote .section-head {
@@ -97,6 +100,7 @@
   padding: 0 22px;
   border: 0;
   background: var(--accent);
+  color: var(--accent-ink);
   font-size: 26px;
   font-weight: 800;
   text-align: left;
@@ -106,8 +110,8 @@
   width: 12px;
   height: 12px;
   margin-right: 4px;
-  border-right: 4px solid var(--ink);
-  border-bottom: 4px solid var(--ink);
+  border-right: 4px solid var(--accent-ink);
+  border-bottom: 4px solid var(--accent-ink);
   transform: rotate(45deg);
   transition: transform 0.2s ease;
 }
@@ -136,28 +140,26 @@
   gap: 12px;
   min-height: 64px;
   padding: 0 18px;
-  border: 3px solid var(--ink);
+  border: 3px solid var(--line);
   border-radius: 16px;
-  background: #fff;
+  background: #f4faff;
   font-size: 21px;
   font-weight: 700;
   text-align: left;
 }
 
-.remote .workout:active {
-  background: var(--accent);
-}
-
+.remote .workout:active,
 .remote .workout[aria-current="true"] {
   background: var(--accent);
+  color: var(--accent-ink);
 }
 
 .badge {
   flex: none;
   padding: 4px 10px;
   border-radius: 999px;
-  background: var(--ink);
-  color: #fff;
+  background: var(--accent-ink);
+  color: var(--accent);
   font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -167,9 +169,9 @@
 .remote .offline {
   margin: 0;
   padding: 12px 16px;
-  border: 3px solid var(--ink);
+  border: 3px solid var(--line);
   border-radius: 14px;
-  background: #fde047;
+  background: #b7adcf;
   font-size: 16px;
   font-weight: 700;
 }

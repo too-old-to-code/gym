@@ -26,11 +26,16 @@ function writeSavedUser(id: string | null): void {
 
 type ViewProps = { config: Config; selection: Selection | null; onSelect: (s: Selection) => void; connected?: boolean };
 
-// Bright accent per section; unknown sections cycle through the same palette.
-const ACCENTS: Record<string, string> = { strength: "#22d3ee", crossfit: "#fb923c", rehab: "#4ade80" };
-const FALLBACK_ACCENTS = ["#a78bfa", "#f472b6", "#facc15", "#60a5fa"];
-const accentFor = (id: string, index: number) => ACCENTS[id] ?? FALLBACK_ACCENTS[index % FALLBACK_ACCENTS.length];
-const USER_ACCENTS = ["#22d3ee", "#fb923c", "#4ade80", "#a78bfa", "#f472b6", "#facc15"];
+// Section and user colours, taken in turn: [fill, text on that fill].
+const ACCENTS: [string, string][] = [
+  ["#b7adcf", "#262a2c"],
+  ["#4f646f", "#f4faff"],
+  ["#dee7e7", "#262a2c"],
+];
+const accentStyle = (index: number) => {
+  const [fill, ink] = ACCENTS[index % ACCENTS.length];
+  return { "--accent": fill, "--accent-ink": ink } as CSSProperties;
+};
 
 export function RemoteView({ config, selection, onSelect, connected = true }: ViewProps) {
   const [savedUserId, setSavedUserId] = useState<string | null>(readSavedUser);
@@ -51,7 +56,7 @@ export function RemoteView({ config, selection, onSelect, connected = true }: Vi
             <button
               key={u.id}
               className="person"
-              style={{ "--accent": USER_ACCENTS[i % USER_ACCENTS.length] } as CSSProperties}
+              style={accentStyle(i)}
               onClick={() => {
                 writeSavedUser(u.id);
                 setSavedUserId(u.id);
@@ -93,7 +98,7 @@ export function RemoteView({ config, selection, onSelect, connected = true }: Vi
             <section
               key={c.id}
               className={`section${open ? " open" : ""}`}
-              style={{ "--accent": accentFor(c.id, i) } as CSSProperties}
+              style={accentStyle(i)}
             >
               <h2>
                 <button
