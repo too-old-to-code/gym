@@ -1,6 +1,15 @@
 import type { Selection } from "./protocol";
 
-export type Workout = { id: string; name: string };
+export type Workout = {
+  id: string;
+  name: string;
+  /** A countdown, for workouts such as an AMRAP. */
+  timerMinutes?: number;
+  /** A stopwatch that counts up from zero, for workouts such as rounds for time. */
+  stopwatch?: boolean;
+  /** A repeating countdown of this many seconds with a round count, for an EMOM. */
+  intervalSeconds?: number;
+};
 export type Category = { id: string; name: string; workouts: Workout[] };
 export type User = { id: string; name: string; categories: Category[] };
 export type Config = { users: User[] };

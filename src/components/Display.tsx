@@ -1,10 +1,10 @@
 import type { Selection } from "../../shared/protocol";
-import { useGymSocket } from "../lib/useGymSocket";
+import { useGymSocket, type TimerView } from "../lib/useGymSocket";
 import { workoutRegistry } from "../workouts/registry";
 
-export function DisplayView({ selection }: { selection: Selection | null }) {
+export function DisplayView({ selection, timer = null }: { selection: Selection | null; timer?: TimerView | null }) {
   const Workout = selection ? workoutRegistry[selection.workoutId] : undefined;
-  if (Workout) return <Workout />;
+  if (Workout) return <Workout timer={timer} />;
   return (
     <main style={{ display: "grid", placeItems: "center", minHeight: "100vh", fontSize: "12vw" }}>
       <h1>Gym</h1>
@@ -13,6 +13,6 @@ export function DisplayView({ selection }: { selection: Selection | null }) {
 }
 
 export function Display() {
-  const { selection } = useGymSocket();
-  return <DisplayView selection={selection} />;
+  const { selection, timer } = useGymSocket();
+  return <DisplayView selection={selection} timer={timer} />;
 }

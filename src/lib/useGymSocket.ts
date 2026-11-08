@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Selection } from "../../shared/protocol";
+import { clockNow, type TimerAction, type TimerSnapshot } from "../../shared/timer";
+
+/** A timer snapshot plus when it reached this screen, so the countdown can carry on from there. */
+export type TimerView = TimerSnapshot & { receivedAt: number };
 
 type Options = { WebSocketImpl?: typeof WebSocket; url?: string; staleMs?: number };
 
@@ -14,6 +18,7 @@ function defaultUrl(): string {
 
 export function useGymSocket({ WebSocketImpl, url, staleMs = DEFAULT_STALE_MS }: Options = {}) {
   const [selection, setSelection] = useState<Selection | null>(null);
+  const [timer, setTimer] = useState<TimerView | null>(null);
   const [connected, setConnected] = useState(false);
   const socketRef = useRef<WebSocket | null>(null);
 
@@ -58,7 +63,10 @@ export function useGymSocket({ WebSocketImpl, url, staleMs = DEFAULT_STALE_MS }:
         armWatchdog(ws);
         try {
           const msg = JSON.parse(String(event.data));
-          if (msg?.type === "state") setSelection(msg.selection ?? null);
+          if (msg?.type === "state") {
+            setSelection(msg.selection ?? null);
+            setTimer(msg.timer ? { ...msg.timer, receivedAt: Date.now() } : null);
+          }
         } catch {
           // ignore malformed frames
         }
@@ -85,5 +93,22 @@ export function useGymSocket({ WebSocketImpl, url, staleMs = DEFAULT_STALE_MS }:
     if (ws?.readyState === SOCKET_OPEN) ws.send(JSON.stringify({ type: "select", selection: s }));
   }, []);
 
-  return { selection, connected, select };
+  const sendTimer = useCallback((action: TimerAction) => {
+    const ws = socketRef.current;
+    if (ws?.readyState === SOCKET_OPEN) ws.send(JSON.stringify({ type: "timer", action }));
+  }, []);
+
+  return { selection, timer, connected, select, sendTimer };
+}
+
+/** Milliseconds left on `timer`, ticking while it runs; null when there is no timer. */
+export function useClock(timer: TimerView | null): number | null {
+  const [, tick] = useState(0);
+  const running = timer?.status === "running";
+  useEffect(() => {
+    if (!running) return;
+    const id = setInterval(() => tick((n) => n + 1), 200);
+    return () => clearInterval(id);
+  }, [running, timer]);
+  return timer ? clockNow(timer, timer.receivedAt, Date.now()) : null;
 }

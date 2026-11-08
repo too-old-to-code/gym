@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { act, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { useGymSocket } from "../../src/lib/useGymSocket";
+import { useClock, useGymSocket } from "../../src/lib/useGymSocket";
 
 class FakeSocket {
   static instances: FakeSocket[] = [];
@@ -24,8 +24,8 @@ class FakeSocket {
     this.readyState = 1;
     this.onopen?.();
   }
-  push(selection: unknown) {
-    this.onmessage?.({ data: JSON.stringify({ type: "state", selection }) });
+  push(selection: unknown, timer: unknown = null) {
+    this.onmessage?.({ data: JSON.stringify({ type: "state", selection, timer }) });
   }
 }
 const a = { userId: "u", categoryId: "c", workoutId: "w" };
@@ -104,5 +104,58 @@ describe("useGymSocket", () => {
     act(() => FakeSocket.instances[0].onmessage?.({ data: JSON.stringify({ type: "hb" }) }));
     act(() => vi.advanceTimersByTime(800));
     expect(FakeSocket.instances).toHaveLength(1);
+  });
+});
+
+
+describe("useGymSocket timer", () => {
+  const snap = (status: string, ms: number) => ({ status, direction: "down" as const, totalMs: 60_000, ms });
+
+  test("is null until the server sends one", () => {
+    const { result } = renderHook(() => useGymSocket(opts()));
+    act(() => FakeSocket.instances[0].push(a));
+    expect(result.current.timer).toBeNull();
+  });
+
+  test("exposes the timer with the time it arrived", () => {
+    vi.setSystemTime(5000);
+    const { result } = renderHook(() => useGymSocket(opts()));
+    act(() => FakeSocket.instances[0].push(a, snap("running", 60_000)));
+    expect(result.current.timer).toEqual({ ...snap("running", 60_000), receivedAt: 5000 });
+  });
+
+  test("sendTimer sends a timer message and nothing when the socket is closed", () => {
+    const { result } = renderHook(() => useGymSocket(opts()));
+    act(() => result.current.sendTimer("start"));
+    expect(FakeSocket.instances[0].sent).toEqual([]);
+    act(() => FakeSocket.instances[0].open());
+    act(() => result.current.sendTimer("start"));
+    expect(FakeSocket.instances[0].sent.map((m) => JSON.parse(m))).toEqual([{ type: "timer", action: "start" }]);
+  });
+});
+
+describe("useClock", () => {
+  test("a running timer counts down each second and stops at zero", () => {
+    vi.setSystemTime(0);
+    const timer = { status: "running" as const, direction: "down" as const, totalMs: 5000, ms: 3000, receivedAt: 0 };
+    const { result } = renderHook(() => useClock(timer));
+    expect(result.current).toBe(3000);
+    act(() => vi.advanceTimersByTime(1000));
+    expect(result.current).toBe(2000);
+    act(() => vi.advanceTimersByTime(10_000));
+    expect(result.current).toBe(0);
+  });
+
+  test("a paused timer holds its time", () => {
+    vi.setSystemTime(0);
+    const timer = { status: "paused" as const, direction: "down" as const, totalMs: 5000, ms: 3000, receivedAt: 0 };
+    const { result } = renderHook(() => useClock(timer));
+    act(() => vi.advanceTimersByTime(4000));
+    expect(result.current).toBe(3000);
+  });
+
+  test("no timer gives null", () => {
+    const { result } = renderHook(() => useClock(null));
+    expect(result.current).toBeNull();
   });
 });

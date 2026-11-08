@@ -1,7 +1,9 @@
+import { isTimerAction, type TimerAction, type TimerSnapshot } from "./timer";
+
 export type Selection = { userId: string; categoryId: string; workoutId: string };
 
-export type ClientMessage = { type: "select"; selection: Selection };
-export type ServerMessage = { type: "state"; selection: Selection | null } | { type: "hb" };
+export type ClientMessage = { type: "select"; selection: Selection } | { type: "timer"; action: TimerAction };
+export type ServerMessage = { type: "state"; selection: Selection | null; timer: TimerSnapshot | null } | { type: "hb" };
 
 export function isSelection(value: unknown): value is Selection {
   if (typeof value !== "object" || value === null) return false;
@@ -22,5 +24,6 @@ export function parseClientMessage(raw: string): ClientMessage | null {
     const { userId, categoryId, workoutId } = msg.selection;
     return { type: "select", selection: { userId, categoryId, workoutId } };
   }
+  if (msg.type === "timer" && isTimerAction(msg.action)) return { type: "timer", action: msg.action };
   return null;
 }

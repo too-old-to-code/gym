@@ -8,14 +8,70 @@
           "id": "strength",
           "name": "Strength",
           "workouts": [
-            { "id": "strength-a", "name": "Strength A" },
-            { "id": "strength-b", "name": "Strength B" }
+            {
+              "id": "strength-a",
+              "name": "Strength A"
+            },
+            {
+              "id": "strength-b",
+              "name": "Strength B"
+            }
           ]
         },
         {
-          "id": "crossfit",
-          "name": "CrossFit",
-          "workouts": [{ "id": "crossfit-1", "name": "CrossFit 1" }]
+          "id": "emom",
+          "name": "EMOM",
+          "workouts": [
+            {
+              "id": "emom-1",
+              "name": "EMOM 1",
+              "intervalSeconds": 60
+            }
+          ]
+        },
+        {
+          "id": "chipper",
+          "name": "Chipper",
+          "workouts": [
+            {
+              "id": "chipper-1",
+              "name": "Chipper 1",
+              "stopwatch": true
+            }
+          ]
+        },
+        {
+          "id": "rounds-for-time",
+          "name": "Rounds for time",
+          "workouts": [
+            {
+              "id": "rft-1",
+              "name": "RFT 1",
+              "stopwatch": true
+            }
+          ]
+        },
+        {
+          "id": "amrap",
+          "name": "AMRAP",
+          "workouts": [
+            {
+              "id": "amrap-1",
+              "name": "AMRAP 1",
+              "timerMinutes": 20
+            }
+          ]
+        },
+        {
+          "id": "ladder",
+          "name": "Ladder",
+          "workouts": [
+            {
+              "id": "ladder-1",
+              "name": "Ladder 1",
+              "stopwatch": true
+            }
+          ]
         }
       ]
     },
@@ -27,14 +83,70 @@
           "id": "strength",
           "name": "Strength",
           "workouts": [
-            { "id": "strength-a", "name": "Strength A" },
-            { "id": "strength-b", "name": "Strength B" }
+            {
+              "id": "strength-a",
+              "name": "Strength A"
+            },
+            {
+              "id": "strength-b",
+              "name": "Strength B"
+            }
           ]
         },
         {
-          "id": "rehab",
-          "name": "Rehab",
-          "workouts": [{ "id": "rehab-1", "name": "Rehab 1" }]
+          "id": "emom",
+          "name": "EMOM",
+          "workouts": [
+            {
+              "id": "emom-1",
+              "name": "EMOM 1",
+              "intervalSeconds": 60
+            }
+          ]
+        },
+        {
+          "id": "chipper",
+          "name": "Chipper",
+          "workouts": [
+            {
+              "id": "chipper-1",
+              "name": "Chipper 1",
+              "stopwatch": true
+            }
+          ]
+        },
+        {
+          "id": "rounds-for-time",
+          "name": "Rounds for time",
+          "workouts": [
+            {
+              "id": "rft-1",
+              "name": "RFT 1",
+              "stopwatch": true
+            }
+          ]
+        },
+        {
+          "id": "amrap",
+          "name": "AMRAP",
+          "workouts": [
+            {
+              "id": "amrap-1",
+              "name": "AMRAP 1",
+              "timerMinutes": 20
+            }
+          ]
+        },
+        {
+          "id": "ladder",
+          "name": "Ladder",
+          "workouts": [
+            {
+              "id": "ladder-1",
+              "name": "Ladder 1",
+              "stopwatch": true
+            }
+          ]
         }
       ]
     },
@@ -46,14 +158,70 @@
           "id": "strength",
           "name": "Strength",
           "workouts": [
-            { "id": "strength-a", "name": "Strength A" },
-            { "id": "strength-b", "name": "Strength B" }
+            {
+              "id": "strength-a",
+              "name": "Strength A"
+            },
+            {
+              "id": "strength-b",
+              "name": "Strength B"
+            }
           ]
         },
         {
-          "id": "rehab",
-          "name": "Rehab",
-          "workouts": [{ "id": "rehab-1", "name": "Rehab 1" }]
+          "id": "emom",
+          "name": "EMOM",
+          "workouts": [
+            {
+              "id": "emom-1",
+              "name": "EMOM 1",
+              "intervalSeconds": 60
+            }
+          ]
+        },
+        {
+          "id": "chipper",
+          "name": "Chipper",
+          "workouts": [
+            {
+              "id": "chipper-1",
+              "name": "Chipper 1",
+              "stopwatch": true
+            }
+          ]
+        },
+        {
+          "id": "rounds-for-time",
+          "name": "Rounds for time",
+          "workouts": [
+            {
+              "id": "rft-1",
+              "name": "RFT 1",
+              "stopwatch": true
+            }
+          ]
+        },
+        {
+          "id": "amrap",
+          "name": "AMRAP",
+          "workouts": [
+            {
+              "id": "amrap-1",
+              "name": "AMRAP 1",
+              "timerMinutes": 20
+            }
+          ]
+        },
+        {
+          "id": "ladder",
+          "name": "Ladder",
+          "workouts": [
+            {
+              "id": "ladder-1",
+              "name": "Ladder 1",
+              "stopwatch": true
+            }
+          ]
         }
       ]
     }

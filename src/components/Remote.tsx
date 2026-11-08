@@ -1,7 +1,8 @@
-import { useEffect, useState, type CSSProperties } from "react";
+import { useEffect, useState } from "react";
 import type { Config } from "../../shared/config";
 import type { Selection } from "../../shared/protocol";
-import { useGymSocket } from "../lib/useGymSocket";
+import type { TimerAction } from "../../shared/timer";
+import { useGymSocket, type TimerView } from "../lib/useGymSocket";
 import "./Remote.css";
 
 const USER_KEY = "gym.userId";
@@ -24,23 +25,37 @@ function writeSavedUser(id: string | null): void {
   }
 }
 
-type ViewProps = { config: Config; selection: Selection | null; onSelect: (s: Selection) => void; connected?: boolean };
-
-// Section and user colours, taken in turn: [fill, text on that fill].
-const ACCENTS: [string, string][] = [
-  ["#b7adcf", "#262a2c"],
-  ["#4f646f", "#f4faff"],
-  ["#dee7e7", "#262a2c"],
-];
-const accentStyle = (index: number) => {
-  const [fill, ink] = ACCENTS[index % ACCENTS.length];
-  return { "--accent": fill, "--accent-ink": ink } as CSSProperties;
+type ViewProps = {
+  config: Config;
+  selection: Selection | null;
+  onSelect: (s: Selection) => void;
+  connected?: boolean;
+  timer?: TimerView | null;
+  onTimer?: (action: TimerAction) => void;
 };
 
-export function RemoteView({ config, selection, onSelect, connected = true }: ViewProps) {
+/** Fixed bar along the bottom; it slides in when a timed workout is on the screen. */
+function TimerBar({ timer, onTimer }: { timer: TimerView; onTimer: (action: TimerAction) => void }) {
+  const status = timer.status;
+  return (
+    <div className="timer-bar" role="group" aria-label="Timer">
+      <button className="start" disabled={status === "running" || status === "done"} onClick={() => onTimer("start")}>
+        Start
+      </button>
+      <button disabled={status !== "running"} onClick={() => onTimer("stop")}>
+        Stop
+      </button>
+      <button disabled={status === "idle"} onClick={() => onTimer("reset")}>
+        Reset
+      </button>
+    </div>
+  );
+}
+
+export function RemoteView({ config, selection, onSelect, connected = true, timer = null, onTimer }: ViewProps) {
   const [savedUserId, setSavedUserId] = useState<string | null>(readSavedUser);
-  // undefined: follow what is on the screen; null: everything closed; string: that section is open.
-  const [picked, setPicked] = useState<string | null | undefined>(undefined);
+  // undefined: follow what is on the screen; otherwise the category the person tapped.
+  const [picked, setPicked] = useState<string | undefined>(undefined);
 
   const user = config.users.find((u) => u.id === savedUserId);
 
@@ -52,11 +67,10 @@ export function RemoteView({ config, selection, onSelect, connected = true }: Vi
         {offline}
         <h1>Who are you?</h1>
         <div className="people">
-          {config.users.map((u, i) => (
+          {config.users.map((u) => (
             <button
               key={u.id}
               className="person"
-              style={accentStyle(i)}
               onClick={() => {
                 writeSavedUser(u.id);
                 setSavedUserId(u.id);
@@ -72,10 +86,12 @@ export function RemoteView({ config, selection, onSelect, connected = true }: Vi
   }
 
   const onScreen = user.categories.find((c) => c.workouts.some((w) => w.id === selection?.workoutId));
-  const openId = picked === undefined ? (onScreen ?? user.categories[0])?.id ?? null : picked;
+  const category =
+    user.categories.find((c) => c.id === picked) ?? onScreen ?? user.categories[0];
 
+  const showTimer = timer !== null && onTimer !== undefined;
   return (
-    <main className="remote">
+    <main className={`remote${showTimer ? " has-timer" : ""}`}>
       {offline}
       <header className="top">
         <h1>Hi {user.name}</h1>
@@ -90,55 +106,50 @@ export function RemoteView({ config, selection, onSelect, connected = true }: Vi
         </button>
       </header>
 
-      <div className="sections">
-        {user.categories.map((c, i) => {
-          const open = c.id === openId;
-          const panelId = `panel-${c.id}`;
-          return (
-            <section
-              key={c.id}
-              className={`section${open ? " open" : ""}`}
-              style={accentStyle(i)}
-            >
-              <h2>
-                <button
-                  className="section-head"
-                  aria-expanded={open}
-                  aria-controls={panelId}
-                  onClick={() => setPicked(open ? null : c.id)}
-                >
-                  <span>{c.name}</span>
-                  <span className="chevron" aria-hidden="true" />
-                </button>
-              </h2>
-              {open && (
-                <div id={panelId} className="panel">
-                  {c.workouts.map((w) => {
-                    const current = selection?.categoryId === c.id && selection.workoutId === w.id;
-                    return (
-                      <button
-                        key={w.id}
-                        className="workout"
-                        aria-current={current ? "true" : undefined}
-                        onClick={() => onSelect({ userId: user.id, categoryId: c.id, workoutId: w.id })}
-                      >
-                        <span>{w.name}</span>
-                        {current && <span className="badge">On screen</span>}
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-            </section>
-          );
-        })}
+      <div className="categories" role="tablist" aria-label="Workout type">
+        {user.categories.map((c) => (
+          <button
+            key={c.id}
+            role="tab"
+            id={`tab-${c.id}`}
+            aria-selected={c.id === category?.id}
+            aria-controls="workouts"
+            className="category"
+            onClick={() => setPicked(c.id)}
+          >
+            {c.name}
+          </button>
+        ))}
       </div>
+
+      {category && (
+        <section id="workouts" role="tabpanel" aria-labelledby={`tab-${category.id}`} className="workouts">
+          <h2>{category.name}</h2>
+          {category.workouts.length === 0 && <p className="empty">No workouts yet</p>}
+          {category.workouts.map((w) => {
+            const current = selection?.categoryId === category.id && selection.workoutId === w.id;
+            return (
+              <button
+                key={w.id}
+                className="workout"
+                aria-current={current ? "true" : undefined}
+                onClick={() => onSelect({ userId: user.id, categoryId: category.id, workoutId: w.id })}
+              >
+                <span>{w.name}</span>
+                {current && <span className="badge">On screen</span>}
+              </button>
+            );
+          })}
+        </section>
+      )}
+
+      {showTimer && <TimerBar timer={timer} onTimer={onTimer} />}
     </main>
   );
 }
 
 export function Remote() {
-  const { selection, connected, select } = useGymSocket();
+  const { selection, timer, connected, select, sendTimer } = useGymSocket();
   const [config, setConfig] = useState<Config | null>(null);
 
   useEffect(() => {
@@ -161,5 +172,5 @@ export function Remote() {
   }, []);
 
   if (!config) return <main className="remote"><p>Loading…</p></main>;
-  return <RemoteView config={config} selection={selection} onSelect={select} connected={connected} />;
+  return <RemoteView config={config} selection={selection} onSelect={select} connected={connected} timer={timer} onTimer={sendTimer} />;
 }

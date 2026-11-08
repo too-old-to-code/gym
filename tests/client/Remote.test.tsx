@@ -4,9 +4,10 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import type { Config } from "../../shared/config";
 import type { Selection } from "../../shared/protocol";
 
-const socket = vi.hoisted(() => ({ selection: null as Selection | null, select: vi.fn() }));
+const socket = vi.hoisted(() => ({ selection: null as Selection | null, select: vi.fn(), sendTimer: vi.fn() }));
 vi.mock("../../src/lib/useGymSocket", () => ({
-  useGymSocket: () => ({ selection: socket.selection, connected: true, select: socket.select }),
+  useGymSocket: () => ({ selection: socket.selection, timer: null, connected: true, select: socket.select, sendTimer: socket.sendTimer }),
+  useClock: (t: { status: string; ms: number } | null) => (t ? t.ms : null),
 }));
 
 import { Remote, RemoteView } from "../../src/components/Remote";
@@ -18,6 +19,7 @@ const config: Config = {
       name: "Andrew",
       categories: [
         { id: "strength", name: "Strength", workouts: [{ id: "strength-a", name: "Strength A" }] },
+        { id: "amrap", name: "AMRAP", workouts: [{ id: "amrap-1", name: "AMRAP 1", timerMinutes: 20 }] },
         { id: "rehab", name: "Rehab", workouts: [{ id: "rehab-1", name: "Rehab 1" }] },
       ],
     },
@@ -50,15 +52,15 @@ describe("RemoteView", () => {
     view();
     fireEvent.click(screen.getByText("Andrew"));
     expect(localStorage.getItem("gym.userId")).toBe("andrew");
-    expect(screen.getByRole("button", { name: "Strength" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Rehab" })).toBeTruthy();
+    expect(screen.getByRole("tab", { name: "Strength" })).toBeTruthy();
+    expect(screen.getByRole("tab", { name: "Rehab" })).toBeTruthy();
   });
 
   test("a saved user skips the user list", () => {
     localStorage.setItem("gym.userId", "sam");
     view();
     expect(screen.queryByText("Andrew")).toBeNull();
-    expect(screen.getByRole("button", { name: "Rehab" })).toBeTruthy();
+    expect(screen.getByRole("tab", { name: "Rehab" })).toBeTruthy();
   });
 
   test("a saved user missing from the config returns to the user list", () => {
@@ -75,33 +77,40 @@ describe("RemoteView", () => {
     expect(screen.getByText("Andrew")).toBeTruthy();
   });
 
-  test("lists a user's categories as accordion headers", () => {
+  test("shows every category at once as a tab, with the first selected", () => {
     localStorage.setItem("gym.userId", "andrew");
     view();
-    expect(screen.getByRole("button", { name: "Strength" }).getAttribute("aria-expanded")).toBe("true");
-    expect(screen.getByRole("button", { name: "Rehab" }).getAttribute("aria-expanded")).toBe("false");
+    const tabs = screen.getAllByRole("tab").map((t) => [t.textContent, t.getAttribute("aria-selected")]);
+    expect(tabs).toEqual([
+      ["Strength", "true"],
+      ["AMRAP", "false"],
+      ["Rehab", "false"],
+    ]);
   });
 
-  test("opens the first section by default when nothing is on the screen", () => {
+  test("lists the selected category's workouts only", () => {
     localStorage.setItem("gym.userId", "andrew");
     view();
     expect(screen.getByText("Strength A")).toBeTruthy();
     expect(screen.queryByText("Rehab 1")).toBeNull();
   });
 
-  test("tapping a header opens that section and closes the other", () => {
+  test("tapping a category swaps the workout list", () => {
     localStorage.setItem("gym.userId", "andrew");
     view();
-    fireEvent.click(screen.getByRole("button", { name: "Rehab" }));
+    fireEvent.click(screen.getByRole("tab", { name: "Rehab" }));
     expect(screen.getByText("Rehab 1")).toBeTruthy();
     expect(screen.queryByText("Strength A")).toBeNull();
+    expect(screen.getByRole("tab", { name: "Rehab" }).getAttribute("aria-selected")).toBe("true");
   });
 
-  test("tapping the open header closes it", () => {
-    localStorage.setItem("gym.userId", "andrew");
-    view();
-    fireEvent.click(screen.getByRole("button", { name: "Strength" }));
-    expect(screen.queryByText("Strength A")).toBeNull();
+  test("a section with no workouts says so", () => {
+    localStorage.setItem("gym.userId", "sam");
+    const empty: Config = {
+      users: [{ id: "sam", name: "Sam", categories: [{ id: "emom", name: "EMOM", workouts: [] }] }],
+    };
+    render(<RemoteView config={empty} selection={null} onSelect={vi.fn()} />);
+    expect(screen.getByText("No workouts yet")).toBeTruthy();
   });
 
   test("tapping a workout sends the three ids", () => {
@@ -112,13 +121,81 @@ describe("RemoteView", () => {
     expect(onSelect).toHaveBeenCalledWith({ userId: "andrew", categoryId: "strength", workoutId: "strength-a" });
   });
 
-  test("the section holding the workout on the screen opens and is marked current", () => {
+  test("starts on the category holding the workout on the screen and marks it current", () => {
     localStorage.setItem("gym.userId", "andrew");
     view({ userId: "sam", categoryId: "rehab", workoutId: "rehab-1" });
     const workout = screen.getByText("Rehab 1").closest("button");
     expect(workout?.getAttribute("aria-current")).toBe("true");
     expect(screen.getByText("On screen")).toBeTruthy();
+    expect(screen.getByRole("tab", { name: "Rehab" }).getAttribute("aria-selected")).toBe("true");
     expect(screen.queryByText("Strength A")).toBeNull();
+  });
+});
+
+describe("RemoteView timer controls", () => {
+  const onAmrap = { userId: "andrew", categoryId: "amrap", workoutId: "amrap-1" };
+  const timer = (status: "idle" | "running" | "paused" | "done", ms = 20 * 60_000) => ({
+    status,
+    direction: "down" as const, totalMs: 20 * 60_000,
+    ms,
+    receivedAt: Date.now(),
+  });
+  const timed = (t = timer("idle"), onTimer = vi.fn(), selection: Selection | null = onAmrap) => {
+    localStorage.setItem("gym.userId", "andrew");
+    render(<RemoteView config={config} selection={selection} onSelect={vi.fn()} timer={t} onTimer={onTimer} />);
+    return onTimer;
+  };
+
+  test("a timed workout on the screen shows Start, Stop and Reset in a bar, with no clock", () => {
+    timed();
+    for (const name of ["Start", "Stop", "Reset"]) expect(screen.getByRole("button", { name })).toBeTruthy();
+    expect(document.querySelector(".timer-bar")).not.toBeNull();
+    expect(screen.queryByText("20:00")).toBeNull();
+  });
+
+  test("the buttons send start, stop and reset", () => {
+    const onTimer = timed(timer("running"));
+    fireEvent.click(screen.getByRole("button", { name: "Stop" }));
+    fireEvent.click(screen.getByRole("button", { name: "Reset" }));
+    expect(onTimer.mock.calls).toEqual([["stop"], ["reset"]]);
+  });
+
+  test("start is available when idle", () => {
+    const onTimer = timed(timer("idle"));
+    fireEvent.click(screen.getByRole("button", { name: "Start" }));
+    expect(onTimer).toHaveBeenCalledWith("start");
+  });
+
+  test.each([
+    ["idle", { Start: false, Stop: true, Reset: true }],
+    ["running", { Start: true, Stop: false, Reset: false }],
+    ["paused", { Start: false, Stop: true, Reset: false }],
+    ["done", { Start: true, Stop: true, Reset: false }],
+  ] as const)("%s disables the buttons that do nothing", (status, disabled) => {
+    timed(timer(status, status === "done" ? 0 : 20 * 60_000));
+    for (const [name, off] of Object.entries(disabled)) {
+      expect((screen.getByRole("button", { name }) as HTMLButtonElement).disabled).toBe(off);
+    }
+  });
+
+  test("no controls for a workout without a timer", () => {
+    localStorage.setItem("gym.userId", "andrew");
+    render(
+      <RemoteView
+        config={config}
+        selection={{ userId: "andrew", categoryId: "strength", workoutId: "strength-a" }}
+        onSelect={vi.fn()}
+        timer={null}
+        onTimer={vi.fn()}
+      />,
+    );
+    expect(screen.queryByRole("button", { name: "Start" })).toBeNull();
+  });
+
+  test("the bar stays whichever category is being browsed", () => {
+    timed();
+    fireEvent.click(screen.getByRole("tab", { name: "Strength" }));
+    expect(screen.getByRole("button", { name: "Start" })).toBeTruthy();
   });
 });
 

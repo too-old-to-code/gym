@@ -15,4 +15,14 @@ describe("parseClientMessage", () => {
   ])("rejects %s", (raw) => {
     expect(parseClientMessage(raw)).toBeNull();
   });
+
+  test.each(["start", "stop", "reset"])("timer %s parses", (action) => {
+    expect(parseClientMessage(JSON.stringify({ type: "timer", action }))).toEqual({ type: "timer", action });
+  });
+  test.each([[JSON.stringify({ type: "timer" })], [JSON.stringify({ type: "timer", action: "pause" })], [JSON.stringify({ type: "timer", action: 5 })]])(
+    "rejects timer message %s",
+    (raw) => {
+      expect(parseClientMessage(raw)).toBeNull();
+    },
+  );
 });

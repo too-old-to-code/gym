@@ -9,6 +9,8 @@
   --ink: #f1f5f9;
   --ink-2: #cbd5e1;
   --u: min(1vw, 0.5625vh);
+  /* an exercise row is never taller than this share of the screen */
+  --row-max: 15vh;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -112,6 +114,8 @@
 .gd-sq {
   display: grid;
   flex: 1 1 auto;
+  /* rows share the space, but each stays within --row-max (--extra is room for a heading row) */
+  max-height: calc(var(--rows, 5) * var(--row-max) + var(--extra, 0px));
   grid-template-rows: repeat(5, minmax(0, 1fr));
   min-height: 0;
   overflow: hidden;

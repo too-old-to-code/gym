@@ -19,4 +19,9 @@ describe("DisplayView", () => {
     render(<DisplayView selection={sel("does-not-exist")} />);
     expect(screen.getByText("Gym")).toBeTruthy();
   });
+  test("hands the timer to the workout page", () => {
+    const timer = { status: "paused" as const, direction: "down" as const, totalMs: 20 * 60_000, ms: 12 * 60_000 + 34_000, receivedAt: 0 };
+    render(<DisplayView selection={sel("amrap-1")} timer={timer} />);
+    expect(screen.getByText("12:34")).toBeTruthy();
+  });
 });

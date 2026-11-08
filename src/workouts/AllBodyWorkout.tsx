@@ -35,7 +35,11 @@ export function AllBodyWorkout({ title, lifts }: { title: string; lifts: Lift[] 
         </div>
       </section>
 
-      <section className="gd-card gd-sq" aria-label={`${title} exercises, in order`}>
+      <section
+        className="gd-card gd-sq"
+        aria-label={`${title} exercises, in order`}
+        style={{ "--rows": lifts.length } as CSSProperties}
+      >
         {lifts.map((lift, i) => (
           <article key={lift.name} className="gd-row" style={{ "--c": COLOURS[i % COLOURS.length] } as CSSProperties}>
             <div className="gd-num">{i + 1}</div>

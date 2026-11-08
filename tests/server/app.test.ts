@@ -10,11 +10,29 @@ import { createGymServer } from "../../server/app";
 
 const config: Config = {
   users: [
-    { id: "u", name: "U", categories: [{ id: "c", name: "C", workouts: [{ id: "w", name: "W" }] }] },
+    {
+      id: "u",
+      name: "U",
+      categories: [
+        {
+          id: "c",
+          name: "C",
+          workouts: [
+            { id: "w", name: "W" },
+            { id: "t", name: "T", timerMinutes: 20 },
+            { id: "t2", name: "T2", timerMinutes: 10 },
+            { id: "sw", name: "SW", stopwatch: true },
+            { id: "em", name: "EM", intervalSeconds: 60 },
+          ],
+        },
+      ],
+    },
     { id: "v", name: "V", categories: [{ id: "d", name: "D", workouts: [{ id: "x", name: "X" }] }] },
   ],
 };
 const sel = { userId: "u", categoryId: "c", workoutId: "w" };
+const timed = { userId: "u", categoryId: "c", workoutId: "t" };
+const timerMsg = (c: Client, action: string) => c.ws.send(JSON.stringify({ type: "timer", action }));
 
 let dir: string;
 let stateFile: string;
@@ -68,7 +86,7 @@ afterEach(async () => {
 describe("gym server", () => {
   test("new client receives null state", async () => {
     const a = await connect(await start());
-    expect(await a.next()).toEqual({ type: "state", selection: null });
+    expect(await a.next()).toEqual({ type: "state", selection: null, timer: null });
   });
 
   test("allowed select is broadcast to all clients", async () => {
@@ -78,8 +96,8 @@ describe("gym server", () => {
     await a.next();
     await b.next();
     select(a, sel);
-    expect(await a.next()).toEqual({ type: "state", selection: sel });
-    expect(await b.next()).toEqual({ type: "state", selection: sel });
+    expect(await a.next()).toEqual({ type: "state", selection: sel, timer: null });
+    expect(await b.next()).toEqual({ type: "state", selection: sel, timer: null });
   });
 
   test("select for a workout not assigned to the user is rejected", async () => {
@@ -91,7 +109,7 @@ describe("gym server", () => {
     select(a, { userId: "u", categoryId: "d", workoutId: "x" });
     expect(await noMessageWithin(a, 150)).toBe(true);
     const b = await connect(port);
-    expect(await b.next()).toEqual({ type: "state", selection: sel });
+    expect(await b.next()).toEqual({ type: "state", selection: sel, timer: null });
   });
 
   test("garbage frame is ignored and the socket keeps working", async () => {
@@ -99,7 +117,7 @@ describe("gym server", () => {
     await a.next();
     a.ws.send("garbage");
     select(a, sel);
-    expect(await a.next()).toEqual({ type: "state", selection: sel });
+    expect(await a.next()).toEqual({ type: "state", selection: sel, timer: null });
     expect(a.ws.readyState).toBe(WebSocket.OPEN);
   });
 
@@ -119,7 +137,7 @@ describe("gym server", () => {
     await Promise.all(servers.map((s) => new Promise((r) => s.close(r))));
     servers = [];
     const b = await connect(await start());
-    expect(await b.next()).toEqual({ type: "state", selection: sel });
+    expect(await b.next()).toEqual({ type: "state", selection: sel, timer: null });
   });
 
   test("GET / serves index.html; unknown path 404; traversal blocked", async () => {
@@ -170,7 +188,7 @@ describe("gym server survives bad input", () => {
     await new Promise((r) => setTimeout(r, 150));
     expect(await alive(port)).toBe(true);
     const b = await connect(port);
-    expect(await b.next()).toEqual({ type: "state", selection: null });
+    expect(await b.next()).toEqual({ type: "state", selection: null, timer: null });
   });
 
   test("a state file that cannot be written does not stop selections being applied", async () => {
@@ -180,7 +198,7 @@ describe("gym server survives bad input", () => {
     const a = await connect(port);
     await a.next();
     select(a, sel);
-    expect(await a.next()).toEqual({ type: "state", selection: sel });
+    expect(await a.next()).toEqual({ type: "state", selection: sel, timer: null });
     expect(await alive(port)).toBe(true);
   });
 
@@ -203,5 +221,132 @@ describe("gym server heartbeat", () => {
     const a = await connect(await start({ heartbeatMs: 40 }));
     await a.next();
     expect(await a.next()).toEqual({ type: "hb" });
+  });
+});
+
+
+describe("gym server timer", () => {
+  const MIN = 60_000;
+  const withClock = () => {
+    const clock = { now: 1_000_000 };
+    return { clock, now: () => clock.now };
+  };
+
+  test("a workout without a timer has timer null and ignores timer messages", async () => {
+    const a = await connect(await start());
+    await a.next();
+    select(a, sel);
+    expect(await a.next()).toMatchObject({ timer: null });
+    timerMsg(a, "start");
+    expect(await noMessageWithin(a, 150)).toBe(true);
+  });
+
+  test("selecting a timed workout starts it idle at the full time", async () => {
+    const a = await connect(await start());
+    await a.next();
+    select(a, timed);
+    expect(await a.next()).toEqual({
+      type: "state",
+      selection: timed,
+      timer: { status: "idle", direction: "down", totalMs: 20 * MIN, ms: 20 * MIN },
+    });
+  });
+
+  test("start, stop and reset are broadcast to every client", async () => {
+    const { clock, now } = withClock();
+    const port = await start({ now });
+    const a = await connect(port);
+    const b = await connect(port);
+    await a.next();
+    await b.next();
+    select(a, timed);
+    await a.next();
+    await b.next();
+
+    timerMsg(a, "start");
+    expect((await a.next()).timer).toMatchObject({ status: "running", ms: 20 * MIN });
+    expect((await b.next()).timer).toMatchObject({ status: "running" });
+
+    clock.now += 5000;
+    timerMsg(b, "stop");
+    expect((await a.next()).timer).toEqual({ status: "paused", direction: "down", totalMs: 20 * MIN, ms: 20 * MIN - 5000 });
+    await b.next();
+
+    timerMsg(a, "reset");
+    expect((await a.next()).timer).toEqual({ status: "idle", direction: "down", totalMs: 20 * MIN, ms: 20 * MIN });
+  });
+
+  test("a client that connects mid-countdown gets the time that is left", async () => {
+    const { clock, now } = withClock();
+    const port = await start({ now });
+    const a = await connect(port);
+    await a.next();
+    select(a, timed);
+    await a.next();
+    timerMsg(a, "start");
+    await a.next();
+    clock.now += 30_000;
+    const b = await connect(port);
+    expect((await b.next()).timer).toEqual({ status: "running", direction: "down", totalMs: 20 * MIN, ms: 20 * MIN - 30_000 });
+  });
+
+  test("picking a different workout resets the timer; picking the same one keeps it running", async () => {
+    const { now } = withClock();
+    const a = await connect(await start({ now }));
+    await a.next();
+    select(a, timed);
+    await a.next();
+    timerMsg(a, "start");
+    await a.next();
+    select(a, timed);
+    expect((await a.next()).timer).toMatchObject({ status: "running" });
+    select(a, { ...timed, workoutId: "t2" });
+    expect((await a.next()).timer).toEqual({ status: "idle", direction: "down", totalMs: 10 * MIN, ms: 10 * MIN });
+  });
+
+  test("a restarted server starts the remembered timed workout idle", async () => {
+    const a = await connect(await start());
+    await a.next();
+    select(a, timed);
+    await a.next();
+    timerMsg(a, "start");
+    await a.next();
+    a.ws.terminate();
+    await Promise.all(servers.map((s) => new Promise((r) => s.close(r))));
+    servers = [];
+    const b = await connect(await start());
+    expect(await b.next()).toMatchObject({ selection: timed, timer: { status: "idle", ms: 20 * MIN } });
+  });
+
+  test("a stopwatch workout starts at zero and counts up for every client", async () => {
+    const { clock, now } = withClock();
+    const port = await start({ now });
+    const a = await connect(port);
+    await a.next();
+    select(a, { ...sel, workoutId: "sw" });
+    expect((await a.next()).timer).toEqual({ status: "idle", direction: "up", totalMs: 0, ms: 0 });
+    timerMsg(a, "start");
+    await a.next();
+    clock.now += 90_000;
+    const b = await connect(port);
+    expect((await b.next()).timer).toEqual({ status: "running", direction: "up", totalMs: 0, ms: 90_000 });
+    timerMsg(a, "stop");
+    expect((await a.next()).timer).toMatchObject({ status: "paused", ms: 90_000 });
+    timerMsg(a, "reset");
+    expect((await a.next()).timer).toMatchObject({ status: "idle", ms: 0 });
+  });
+
+  test("an interval workout shares a stopwatch that carries its interval", async () => {
+    const { clock, now } = withClock();
+    const port = await start({ now });
+    const a = await connect(port);
+    await a.next();
+    select(a, { ...sel, workoutId: "em" });
+    expect((await a.next()).timer).toEqual({ status: "idle", direction: "up", totalMs: 0, ms: 0, intervalMs: 60_000 });
+    timerMsg(a, "start");
+    await a.next();
+    clock.now += 150_000;
+    const b = await connect(port);
+    expect((await b.next()).timer).toEqual({ status: "running", direction: "up", totalMs: 0, ms: 150_000, intervalMs: 60_000 });
   });
 });

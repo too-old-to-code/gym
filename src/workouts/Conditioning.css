@@ -1,0 +1,172 @@
+/* Timed workout pages (AMRAP, rounds for time) reuse the Strength A look (StrengthA.css). */
+
+/* the countdown sits on the page itself, not in a card */
+.gd-timer {
+  --timer-colour: #4ade80;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(0.6 * var(--u));
+  padding: calc(1 * var(--u)) 0;
+}
+
+.gd-timer[data-urgent="true"] {
+  --timer-colour: #f87171;
+}
+
+.gd-timer-clock {
+  color: var(--timer-colour);
+  font-size: calc(26 * var(--u));
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+}
+
+.gd-skill {
+  padding: calc(2.4 * var(--u)) calc(3 * var(--u));
+}
+
+.gd-skill-name {
+  margin-top: calc(1 * var(--u));
+  font-size: calc(6 * var(--u));
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+/* a row with no figure: number, name, amount */
+.gd-row-plain {
+  grid-template-columns: calc(7.5 * var(--u)) minmax(0, 1fr) auto;
+  grid-template-areas: "num meta rx";
+}
+
+.gd-moves .gd-name {
+  font-size: calc(6 * var(--u));
+}
+
+.gd-moves .gd-score {
+  font-size: calc(13 * var(--u));
+}
+
+.gd-moves .gd-score-wide {
+  font-size: calc(9 * var(--u));
+}
+
+.gd-moves .gd-rx-label {
+  font-size: calc(2.2 * var(--u));
+}
+
+/* the blocks of movements share the space left under the clock */
+.gd-sections {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: calc(2.2 * var(--u));
+  min-height: 0;
+}
+
+.gd-sections > .gd-moves {
+  flex-basis: 0;
+  min-height: 0;
+}
+
+.gd-group-title {
+  display: flex;
+  align-items: baseline;
+  gap: calc(2 * var(--u));
+  padding: calc(2.4 * var(--u)) calc(3 * var(--u)) calc(1.2 * var(--u));
+  border-bottom: calc(0.2 * var(--u)) solid var(--line);
+  font-size: calc(11 * var(--u));
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+
+.gd-group-note {
+  color: var(--ink-2);
+  font-size: calc(2.2 * var(--u));
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.gd-row-name-only {
+  grid-template-columns: calc(7.5 * var(--u)) minmax(0, 1fr);
+  grid-template-areas: "num meta";
+}
+
+/* chipper: a down arrow leads from each movement into the next */
+.gd-row {
+  position: relative;
+}
+
+.gd-arrow-in,
+.gd-arrow-out {
+  position: absolute;
+  left: calc(3 * var(--u) + 3.5 * var(--u) - 0.2 * var(--u));
+  width: calc(0.4 * var(--u));
+  background: var(--ink-2);
+  border-radius: calc(0.2 * var(--u));
+}
+
+/* from the row's top edge down to the number */
+.gd-arrow-in {
+  top: 0;
+  height: calc(50% - 4.6 * var(--u));
+}
+
+.gd-arrow-in::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: calc(1.8 * var(--u));
+  height: calc(1.8 * var(--u));
+  border-right: calc(0.4 * var(--u)) solid var(--ink-2);
+  border-bottom: calc(0.4 * var(--u)) solid var(--ink-2);
+  transform: translateX(-50%) rotate(45deg);
+}
+
+/* from the number down to the row's bottom edge */
+.gd-arrow-out {
+  top: calc(50% + 4.6 * var(--u));
+  bottom: 0;
+}
+
+.gd-banner {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: calc(2.4 * var(--u));
+  padding: calc(2.2 * var(--u)) calc(3 * var(--u));
+  font-size: calc(5 * var(--u));
+  font-weight: 700;
+}
+
+.gd-banner svg {
+  flex: none;
+  width: calc(7 * var(--u));
+  height: calc(7 * var(--u));
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* EMOM: how many minutes are done, under the clock */
+.gd-rounds {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: calc(2 * var(--u));
+  margin-top: calc(0.8 * var(--u));
+}
+
+.gd-rounds-count {
+  font-size: calc(9 * var(--u));
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}

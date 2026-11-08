@@ -4,7 +4,8 @@ import { createServer, type Server } from "node:http";
 import { extname, join, resolve, sep } from "node:path";
 import { WebSocketServer, type WebSocket } from "ws";
 import { isSelectionAllowed, type Config } from "../shared/config";
-import { parseClientMessage, type ServerMessage } from "../shared/protocol";
+import { parseClientMessage, type Selection, type ServerMessage } from "../shared/protocol";
+import { applyTimerAction, idleStopwatch, idleTimer, snapshotTimer, type TimerState } from "../shared/timer";
 import { createSelectionStore } from "./store";
 
 const MIME: Record<string, string> = {
@@ -18,7 +19,7 @@ const MIME: Record<string, string> = {
   ".ico": "image/x-icon",
 };
 
-type Options = { config: Config; stateFile: string; staticDir: string; heartbeatMs?: number };
+type Options = { config: Config; stateFile: string; staticDir: string; heartbeatMs?: number; now?: () => number };
 
 const MAX_MESSAGE_BYTES = 4096;
 
@@ -30,22 +31,54 @@ function pathOf(url: string | undefined): string | null {
   }
 }
 
-export function createGymServer({ config, stateFile, staticDir, heartbeatMs = 15_000 }: Options): Server {
+export function createGymServer({ config, stateFile, staticDir, heartbeatMs = 15_000, now = Date.now }: Options): Server {
   const store = createSelectionStore(stateFile, config);
   const wss = new WebSocketServer({ noServer: true, maxPayload: MAX_MESSAGE_BYTES });
   const root = resolve(staticDir);
 
-  const stateMessage = (): string => JSON.stringify({ type: "state", selection: store.get() } satisfies ServerMessage);
+  // A timed workout carries a clock that every screen shares: a countdown (an AMRAP) or a
+  // stopwatch (rounds for time). It is not saved across restarts: a restarted server starts the
+  // remembered workout's timer from the top.
+  const timerFor = (selection: Selection | null): TimerState | null => {
+    const workout = config.users
+      .find((u) => u.id === selection?.userId)
+      ?.categories.find((c) => c.id === selection?.categoryId)
+      ?.workouts.find((w) => w.id === selection?.workoutId);
+    if (workout?.timerMinutes) return idleTimer(workout.timerMinutes * 60_000);
+    if (workout?.intervalSeconds) return idleStopwatch(workout.intervalSeconds * 1000);
+    if (workout?.stopwatch) return idleStopwatch();
+    return null;
+  };
+  let timer = timerFor(store.get());
+
+  const stateMessage = (): string =>
+    JSON.stringify({
+      type: "state",
+      selection: store.get(),
+      timer: timer ? snapshotTimer(timer, now()) : null,
+    } satisfies ServerMessage);
+  const broadcast = () => {
+    const out = stateMessage();
+    for (const client of wss.clients) if (client.readyState === client.OPEN) client.send(out);
+  };
 
   wss.on("connection", (ws: WebSocket) => {
     ws.on("error", (err) => console.error("socket error:", err.message));
     ws.send(stateMessage());
     ws.on("message", (data) => {
       const msg = parseClientMessage(data.toString());
-      if (!msg || !isSelectionAllowed(config, msg.selection)) return;
+      if (!msg) return;
+      if (msg.type === "timer") {
+        if (!timer) return;
+        timer = applyTimerAction(timer, msg.action, now());
+        broadcast();
+        return;
+      }
+      if (!isSelectionAllowed(config, msg.selection)) return;
+      const sameWorkout = store.get()?.workoutId === msg.selection.workoutId;
       store.set(msg.selection);
-      const out = stateMessage();
-      for (const client of wss.clients) if (client.readyState === client.OPEN) client.send(out);
+      if (!sameWorkout) timer = timerFor(msg.selection);
+      broadcast();
     });
   });
 
