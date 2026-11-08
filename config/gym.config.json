@@ -72,6 +72,31 @@
               "stopwatch": true
             }
           ]
+        },
+        {
+          "id": "warmup",
+          "name": "Warm-up / Rehab",
+          "workouts": [
+            {
+              "id": "warmup-a",
+              "name": "Warm-up A"
+            },
+            {
+              "id": "warmup-b",
+              "name": "Warm-up B"
+            }
+          ]
+        },
+        {
+          "id": "yoga",
+          "name": "Yoga",
+          "workouts": [
+            {
+              "id": "yoga-1",
+              "name": "Yoga 1",
+              "media": true
+            }
+          ]
         }
       ]
     },
@@ -147,6 +172,31 @@
               "stopwatch": true
             }
           ]
+        },
+        {
+          "id": "warmup",
+          "name": "Warm-up / Rehab",
+          "workouts": [
+            {
+              "id": "warmup-a",
+              "name": "Warm-up A"
+            },
+            {
+              "id": "warmup-b",
+              "name": "Warm-up B"
+            }
+          ]
+        },
+        {
+          "id": "yoga",
+          "name": "Yoga",
+          "workouts": [
+            {
+              "id": "yoga-1",
+              "name": "Yoga 1",
+              "media": true
+            }
+          ]
         }
       ]
     },
@@ -220,6 +270,31 @@
               "id": "ladder-1",
               "name": "Ladder 1",
               "stopwatch": true
+            }
+          ]
+        },
+        {
+          "id": "warmup",
+          "name": "Warm-up / Rehab",
+          "workouts": [
+            {
+              "id": "warmup-a",
+              "name": "Warm-up A"
+            },
+            {
+              "id": "warmup-b",
+              "name": "Warm-up B"
+            }
+          ]
+        },
+        {
+          "id": "yoga",
+          "name": "Yoga",
+          "workouts": [
+            {
+              "id": "yoga-1",
+              "name": "Yoga 1",
+              "media": true
             }
           ]
         }

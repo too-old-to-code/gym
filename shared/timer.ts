@@ -7,6 +7,7 @@ export type TimerDirection = "down" | "up";
  * `ms` is the time on the clock: time left when counting down, time elapsed when counting up.
  * `totalMs` is the starting time for a countdown, and 0 for a stopwatch.
  * `intervalMs` marks a stopwatch that screens show as a repeating countdown with a round count (an EMOM).
+ * `kind: "media"` marks a video: only the status matters (playing, paused or at the start).
  */
 export type TimerSnapshot = {
   status: TimerStatus;
@@ -14,6 +15,7 @@ export type TimerSnapshot = {
   totalMs: number;
   ms: number;
   intervalMs?: number;
+  kind?: "media";
 };
 
 /** The server's own record; `startedAt` is set only while running. */
@@ -27,6 +29,11 @@ export function idleTimer(totalMs: number): TimerState {
   return { status: "idle", direction: "down", totalMs, ms: totalMs };
 }
 
+/** Play, pause and reset a video: it reuses the stopwatch's start, stop and reset. */
+export function idleMedia(): TimerState {
+  return { status: "idle", direction: "up", totalMs: 0, ms: 0, kind: "media" };
+}
+
 export function idleStopwatch(intervalMs?: number): TimerState {
   return { status: "idle", direction: "up", totalMs: 0, ms: 0, ...(intervalMs ? { intervalMs } : {}) };
 }
@@ -35,7 +42,12 @@ const startMs = (t: TimerSnapshot) => (t.direction === "down" ? t.totalMs : 0);
 
 /** The timer as of `now`: a running countdown has counted down (and is done at zero), a stopwatch has counted up. */
 export function snapshotTimer(t: TimerState, now: number): TimerSnapshot {
-  const base = { direction: t.direction, totalMs: t.totalMs, ...(t.intervalMs ? { intervalMs: t.intervalMs } : {}) };
+  const base = {
+    direction: t.direction,
+    totalMs: t.totalMs,
+    ...(t.intervalMs ? { intervalMs: t.intervalMs } : {}),
+    ...(t.kind ? { kind: t.kind } : {}),
+  };
   if (t.status !== "running") return { ...base, status: t.status, ms: t.ms };
   const elapsed = now - (t.startedAt ?? now);
   if (t.direction === "up") return { ...base, status: "running", ms: t.ms + elapsed };

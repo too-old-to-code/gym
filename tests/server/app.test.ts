@@ -23,6 +23,7 @@ const config: Config = {
             { id: "t2", name: "T2", timerMinutes: 10 },
             { id: "sw", name: "SW", stopwatch: true },
             { id: "em", name: "EM", intervalSeconds: 60 },
+            { id: "vid", name: "VID", media: true },
           ],
         },
       ],
@@ -348,5 +349,24 @@ describe("gym server timer", () => {
     clock.now += 150_000;
     const b = await connect(port);
     expect((await b.next()).timer).toEqual({ status: "running", direction: "up", totalMs: 0, ms: 150_000, intervalMs: 60_000 });
+  });
+
+  test("a video workout shares play, pause and reset with every screen", async () => {
+    const port = await start();
+    const a = await connect(port);
+    const b = await connect(port);
+    await a.next();
+    await b.next();
+    select(a, { ...sel, workoutId: "vid" });
+    expect((await a.next()).timer).toMatchObject({ status: "idle", kind: "media" });
+    await b.next();
+    timerMsg(a, "start");
+    expect((await b.next()).timer).toMatchObject({ status: "running", kind: "media" });
+    await a.next();
+    timerMsg(b, "stop");
+    expect((await a.next()).timer).toMatchObject({ status: "paused", kind: "media" });
+    await b.next();
+    timerMsg(a, "reset");
+    expect((await b.next()).timer).toMatchObject({ status: "idle", kind: "media" });
   });
 });

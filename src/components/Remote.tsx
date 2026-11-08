@@ -37,13 +37,14 @@ type ViewProps = {
 /** Fixed bar along the bottom; it slides in when a timed workout is on the screen. */
 function TimerBar({ timer, onTimer }: { timer: TimerView; onTimer: (action: TimerAction) => void }) {
   const status = timer.status;
+  const video = timer.kind === "media";
   return (
-    <div className="timer-bar" role="group" aria-label="Timer">
+    <div className="timer-bar" role="group" aria-label={video ? "Video" : "Timer"}>
       <button className="start" disabled={status === "running" || status === "done"} onClick={() => onTimer("start")}>
-        Start
+        {video ? "Play" : "Start"}
       </button>
       <button disabled={status !== "running"} onClick={() => onTimer("stop")}>
-        Stop
+        {video ? "Pause" : "Stop"}
       </button>
       <button disabled={status === "idle"} onClick={() => onTimer("reset")}>
         Reset

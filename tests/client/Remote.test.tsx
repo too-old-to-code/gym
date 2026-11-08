@@ -199,6 +199,53 @@ describe("RemoteView timer controls", () => {
   });
 });
 
+describe("RemoteView video controls", () => {
+  const video = (status: "idle" | "running" | "paused") => ({
+    status,
+    direction: "up" as const,
+    totalMs: 0,
+    ms: 0,
+    kind: "media" as const,
+    receivedAt: Date.now(),
+  });
+  const onVideo = (status: "idle" | "running" | "paused") => {
+    localStorage.setItem("gym.userId", "andrew");
+    const onTimer = vi.fn();
+    render(
+      <RemoteView
+        config={config}
+        selection={{ userId: "andrew", categoryId: "amrap", workoutId: "amrap-1" }}
+        onSelect={vi.fn()}
+        timer={video(status)}
+        onTimer={onTimer}
+      />,
+    );
+    return onTimer;
+  };
+
+  test("a video is controlled with Play, Pause and Reset, not Start and Stop", () => {
+    onVideo("idle");
+    for (const name of ["Play", "Pause", "Reset"]) expect(screen.getByRole("button", { name })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Start" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Stop" })).toBeNull();
+  });
+
+  test("the buttons send start, stop and reset", () => {
+    const onTimer = onVideo("running");
+    fireEvent.click(screen.getByRole("button", { name: "Pause" }));
+    fireEvent.click(screen.getByRole("button", { name: "Reset" }));
+    expect(onTimer.mock.calls).toEqual([["stop"], ["reset"]]);
+  });
+
+  test("Play is available when idle or paused, and not while playing", () => {
+    onVideo("idle");
+    expect((screen.getByRole("button", { name: "Play" }) as HTMLButtonElement).disabled).toBe(false);
+    cleanup();
+    onVideo("running");
+    expect((screen.getByRole("button", { name: "Play" }) as HTMLButtonElement).disabled).toBe(true);
+  });
+});
+
 describe("RemoteView connection state", () => {
   test("shows a reconnecting notice while the socket is down", () => {
     render(<RemoteView config={config} selection={null} onSelect={vi.fn()} connected={false} />);

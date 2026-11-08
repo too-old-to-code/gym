@@ -9,6 +9,8 @@ export type Workout = {
   stopwatch?: boolean;
   /** A repeating countdown of this many seconds with a round count, for an EMOM. */
   intervalSeconds?: number;
+  /** A video: the remote gets Play, Pause and Reset buttons. */
+  media?: boolean;
 };
 export type Category = { id: string; name: string; workouts: Workout[] };
 export type User = { id: string; name: string; categories: Category[] };

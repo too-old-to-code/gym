@@ -6,7 +6,7 @@ import "./StrengthA.css";
 import "./Conditioning.css";
 
 /** `amount` is left out when the block's heading carries it, such as "21-15-9". */
-export type Move = { name: string; amount?: number | string; unit?: string };
+export type Move = { name: string; amount?: number | string; unit?: string; /** A short note under the name. */ detail?: string };
 
 /** A block of movements, optionally under one heading that applies to all of them. */
 export type Section = {
@@ -23,13 +23,14 @@ export type Banner = { text: string; arrow: "up" | "down" };
 type Props = WorkoutProps & {
   /** Small heading at the top of the page, such as "AMRAP". */
   heading: string;
-  skill: string;
-  /** Label above the clock. */
-  clockLabel: string;
+  /** Left out on pages with no skill card, such as a warm-up. */
+  skill?: string;
+  /** Label above the clock. Left out on pages with no clock. */
+  clockLabel?: string;
   /** Countdown (time left) or stopwatch (time elapsed). */
-  direction: TimerDirection;
+  direction?: TimerDirection;
   /** What the clock shows before the server has sent a timer. */
-  startMs: number;
+  startMs?: number;
   /** An EMOM: show a repeating countdown of this length and count the rounds. Used until the server sends its own. */
   intervalMs?: number;
   /** A countdown turns red once this little time is left. */
@@ -46,8 +47,8 @@ export function ConditioningWorkout({
   heading,
   skill,
   clockLabel,
-  direction,
-  startMs,
+  direction = "up",
+  startMs = 0,
   intervalMs: defaultIntervalMs,
   urgentMs,
   sections,
@@ -66,11 +67,14 @@ export function ConditioningWorkout({
           <h1 className="gd-label">{heading}</h1>
         </header>
 
-        <div className="gd-card gd-skill">
-          <h2 className="gd-label">Skill</h2>
-          <p className="gd-skill-name">{skill}</p>
-        </div>
+        {skill && (
+          <div className="gd-card gd-skill">
+            <h2 className="gd-label">Skill</h2>
+            <p className="gd-skill-name">{skill}</p>
+          </div>
+        )}
 
+        {clockLabel !== undefined && (
         <div className="gd-timer" data-urgent={String(urgent)}>
           <h2 className="gd-label">{clockLabel}</h2>
           <p className="gd-timer-clock">
@@ -83,6 +87,7 @@ export function ConditioningWorkout({
             </p>
           )}
         </div>
+        )}
       </section>
 
       <div className="gd-sections" role="group" aria-label={sectionsLabel}>
@@ -118,6 +123,7 @@ export function ConditioningWorkout({
                   <div className="gd-num">{offset + i + 1}</div>
                   <div className="gd-meta">
                     <h3 className="gd-name">{m.name}</h3>
+                    {m.detail && <p className="gd-kit">{m.detail}</p>}
                   </div>
                   {m.amount !== undefined && (
                     <div className="gd-rx">

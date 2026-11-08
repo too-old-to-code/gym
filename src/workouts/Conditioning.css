@@ -170,3 +170,54 @@
   line-height: 1;
   font-variant-numeric: tabular-nums;
 }
+
+.gd-moves .gd-kit {
+  margin-top: calc(0.8 * var(--u));
+  font-size: calc(2.8 * var(--u));
+}
+
+/* a page that is mostly one video: it fills the width, centred down the screen */
+.gd-video-page {
+  justify-content: flex-start;
+}
+
+.gd-video-frame {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+}
+
+.gd-video {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  /* nobody points at the wall display, and a hover would bring up YouTube's own overlay */
+  pointer-events: none;
+  border-radius: calc(2.4 * var(--u));
+  background: #000;
+}
+
+.gd-video-player {
+  position: absolute;
+  inset: 0;
+}
+
+/* shown while waiting at the start, instead of YouTube's own thumbnail with its play button */
+.gd-video-poster {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* YouTube swaps its own iframe in for the placeholder div */
+.gd-video iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}

@@ -5,7 +5,7 @@ import { extname, join, resolve, sep } from "node:path";
 import { WebSocketServer, type WebSocket } from "ws";
 import { isSelectionAllowed, type Config } from "../shared/config";
 import { parseClientMessage, type Selection, type ServerMessage } from "../shared/protocol";
-import { applyTimerAction, idleStopwatch, idleTimer, snapshotTimer, type TimerState } from "../shared/timer";
+import { applyTimerAction, idleMedia, idleStopwatch, idleTimer, snapshotTimer, type TimerState } from "../shared/timer";
 import { createSelectionStore } from "./store";
 
 const MIME: Record<string, string> = {
@@ -45,6 +45,7 @@ export function createGymServer({ config, stateFile, staticDir, heartbeatMs = 15
       ?.categories.find((c) => c.id === selection?.categoryId)
       ?.workouts.find((w) => w.id === selection?.workoutId);
     if (workout?.timerMinutes) return idleTimer(workout.timerMinutes * 60_000);
+    if (workout?.media) return idleMedia();
     if (workout?.intervalSeconds) return idleStopwatch(workout.intervalSeconds * 1000);
     if (workout?.stopwatch) return idleStopwatch();
     return null;

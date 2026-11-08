@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { applyTimerAction, clockNow, formatClock, idleStopwatch, idleTimer, intervalClock, snapshotTimer } from "../../shared/timer";
+import { applyTimerAction, clockNow, formatClock, idleMedia, idleStopwatch, idleTimer, intervalClock, snapshotTimer } from "../../shared/timer";
 
 const MIN = 60_000;
 
@@ -147,5 +147,18 @@ describe("interval stopwatch (every minute on the minute)", () => {
     [10 * MIN, 60_000, 10],
   ])("%d ms elapsed leaves %d ms in the minute and %d rounds done", (elapsed, left, rounds) => {
     expect(intervalClock(elapsed, MIN)).toEqual({ leftMs: left, rounds });
+  });
+});
+
+
+describe("media controls (play, pause, reset a video)", () => {
+  test("carries its kind through play, pause and reset", () => {
+    let t = idleMedia();
+    expect(snapshotTimer(t, 0)).toMatchObject({ status: "idle", kind: "media" });
+    t = applyTimerAction(t, "start", 0);
+    expect(snapshotTimer(t, 1000)).toMatchObject({ status: "running", kind: "media" });
+    t = applyTimerAction(t, "stop", 1000);
+    expect(snapshotTimer(t, 5000)).toMatchObject({ status: "paused", kind: "media" });
+    expect(snapshotTimer(applyTimerAction(t, "reset", 5000), 5000)).toMatchObject({ status: "idle", kind: "media", ms: 0 });
   });
 });
