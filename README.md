@@ -32,11 +32,11 @@ Pages already serves `main` from the repository root at that URL. This set of da
 
 `firebase-init.js` loads the pinned official browser module `https://www.gstatic.com/firebasejs/13.2.0/firebase-app.js` and calls `initializeApp` with the public web config for `gym-dashboard-a8ae3`. That config is not an admin credential. Each board includes it with `<script type="module" src="firebase-init.js"></script>`, a relative path so it resolves under `/gym/`.
 
-The script records only whether the Firebase app object was created. It does not connect Realtime Database, Auth, Analytics, or Storage, and it does not write. `databaseURL` was not part of the supplied config and is not invented. Realtime stays `not-configured`. If the SDK cannot be loaded, the boards still render and the app is marked unavailable.
+The script records only whether the Firebase app object was created. The config includes `databaseURL` `https://gym-dashboard-a8ae3-default-rtdb.europe-west1.firebasedatabase.app`. The script does not import the Database SDK, open a listener, read, or write. Realtime stays `configured-not-connected`. If the SDK cannot be loaded, the boards still render and the app is marked unavailable.
 
 A remote workout selector or live board still needs all of the following before it can work:
 
-1. The actual Realtime Database URL for this project, after the database is provisioned, passed as `databaseURL`.
+1. Code that imports the Database SDK and attaches a listener. That code is not here.
 2. A chosen authorised Auth or access model for who may select a workout.
 3. Secure Realtime Database rules for that model. Rules must not be left open.
 

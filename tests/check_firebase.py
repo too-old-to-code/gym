@@ -21,6 +21,7 @@ CONFIG = {
     "storageBucket": "gym-dashboard-a8ae3.firebasestorage.app",
     "messagingSenderId": "58358558669",
     "appId": "1:58358558669:web:56318ae4bd96f9d4a75e84",
+    "databaseURL": "https://gym-dashboard-a8ae3-default-rtdb.europe-west1.firebasedatabase.app",
 }
 STATUS_JS = r"""
 new Promise((resolve) => {
@@ -35,7 +36,9 @@ new Promise((resolve) => {
         initialized: !!info.initialized,
         realtimeConnected: !!info.realtimeConnected,
         databaseConfigured: !!info.databaseConfigured,
+        databaseURL: info.databaseURL || "",
         projectId: info.projectId || "",
+        rtdbRequests: performance.getEntriesByType("resource").map((entry) => entry.name).filter((name) => /firebasedatabase|firebaseio|identitytoolkit|securetoken/.test(name)),
         title: (document.querySelector("h1") || {}).textContent || ""
       });
       return;
@@ -62,13 +65,28 @@ def check_source() -> None:
     for key, value in CONFIG.items():
         if f'{key}: "{value}"' not in source:
             errors.append(f"firebase config missing {key}")
-    if re.search(r"databaseURL\s*:", source):
-        errors.append("databaseURL must not be guessed")
-    for banned in ("getDatabase", "getAuth", "getAnalytics", "getFirestore", "getStorage", "firebase-database", "firebase-auth"):
+    if f'databaseURL: "{CONFIG["databaseURL"]}"' not in source and f"databaseURL: DATABASE_URL" not in source:
+        errors.append("databaseURL is not the supplied Realtime Database URL")
+    if CONFIG["databaseURL"] not in source:
+        errors.append("databaseURL value does not match the supplied URL")
+    if re.search(r"databaseURL\s*:\s*\"(?!https://gym-dashboard-a8ae3-default-rtdb\.europe-west1\.firebasedatabase\.app)", source):
+        errors.append("databaseURL is not the supplied host")
+    for banned in (
+        "getDatabase",
+        "getAuth",
+        "getAnalytics",
+        "getFirestore",
+        "getStorage",
+        "firebase-database",
+        "firebase-auth",
+        "onValue",
+        "signIn",
+        "goOnline",
+    ):
         if banned in source:
             errors.append(f"firebase-init.js imports or calls {banned}")
-    if "not-configured" not in source or "realtimeConnected" not in source:
-        errors.append("init status must distinguish app startup from realtime")
+    if "configured-not-connected" not in source or "realtimeConnected" not in source:
+        errors.append("init status must say the database URL is configured and no listener is connected")
     if errors:
         fail(errors)
     print("firebase source: ok")
@@ -128,7 +146,9 @@ def check_browser() -> None:
             errors.append(f"initializeApp did not complete: {live}")
         if live.get("projectId") != CONFIG["projectId"]:
             errors.append(f"initialized project is {live.get('projectId')}")
-        if live.get("realtime") != "not-configured" or live.get("realtimeConnected") or live.get("databaseConfigured"):
+        if live.get("databaseURL") != CONFIG["databaseURL"] or not live.get("databaseConfigured"):
+            errors.append(f"initialized app does not carry the supplied database URL: {live}")
+        if live.get("realtime") != "configured-not-connected" or live.get("realtimeConnected") or live.get("rtdbRequests"):
             errors.append(f"init claimed a database connection: {live}")
     finally:
         process.terminate()
@@ -152,7 +172,7 @@ def check_browser() -> None:
             errors.append(f"board did not render when the SDK was blocked: {failed.get('title')}")
         if failed.get("state") != "unavailable" or failed.get("initialized"):
             errors.append(f"SDK failure was not contained: {failed}")
-        if failed.get("realtimeConnected") or failed.get("databaseConfigured") or failed.get("realtime") != "not-configured":
+        if failed.get("realtimeConnected") or failed.get("rtdbRequests") or failed.get("realtime") != "configured-not-connected":
             errors.append(f"SDK failure changed realtime status: {failed}")
     finally:
         process.terminate()
