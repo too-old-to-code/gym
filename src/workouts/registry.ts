@@ -5,6 +5,7 @@ import { Chipper1 } from "./Chipper1";
 import { CrossFit1, Rehab1 } from "./Placeholder";
 import { Emom1 } from "./Emom1";
 import { Ladder1 } from "./Ladder1";
+import { libraryPages } from "./library";
 import { RoundsForTime1 } from "./RoundsForTime1";
 import { StrengthA } from "./StrengthA";
 import { StrengthB } from "./StrengthB";
@@ -28,4 +29,5 @@ export const workoutRegistry: Record<string, ComponentType<WorkoutProps>> = {
   "rft-1": RoundsForTime1,
   "crossfit-1": CrossFit1,
   "rehab-1": Rehab1,
+  ...libraryPages,
 };

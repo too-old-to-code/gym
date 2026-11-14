@@ -26,6 +26,26 @@
               "id": "emom-1",
               "name": "EMOM 1",
               "intervalSeconds": 60
+            },
+            {
+              "id": "emom-swing-row",
+              "name": "Swing and Row",
+              "intervalSeconds": 60
+            },
+            {
+              "id": "emom-box-burpee",
+              "name": "Box Burpee EMOM",
+              "intervalSeconds": 60
+            },
+            {
+              "id": "emom-hang-hinge",
+              "name": "Hang and Hinge",
+              "intervalSeconds": 60
+            },
+            {
+              "id": "emom-rope-swing",
+              "name": "Rope and Swing",
+              "intervalSeconds": 60
             }
           ]
         },
@@ -36,6 +56,16 @@
             {
               "id": "chipper-1",
               "name": "Chipper 1",
+              "stopwatch": true
+            },
+            {
+              "id": "chipper-slow",
+              "name": "Slow Chipper",
+              "stopwatch": true
+            },
+            {
+              "id": "chipper-lunge",
+              "name": "Lunge Chipper",
               "stopwatch": true
             }
           ]
@@ -48,6 +78,16 @@
               "id": "rft-1",
               "name": "RFT 1",
               "stopwatch": true
+            },
+            {
+              "id": "rft-thruster-triplet",
+              "name": "Thruster Triplet",
+              "stopwatch": true
+            },
+            {
+              "id": "rft-ring-row",
+              "name": "Ring and Row",
+              "stopwatch": true
             }
           ]
         },
@@ -59,6 +99,21 @@
               "id": "amrap-1",
               "name": "AMRAP 1",
               "timerMinutes": 20
+            },
+            {
+              "id": "amrap-pull-push-carry",
+              "name": "Pull, Push, Carry",
+              "timerMinutes": 15
+            },
+            {
+              "id": "amrap-floor-grinder",
+              "name": "Floor Grinder",
+              "timerMinutes": 12
+            },
+            {
+              "id": "amrap-cindy-plus",
+              "name": "Cindy Plus",
+              "timerMinutes": 20
             }
           ]
         },
@@ -69,6 +124,21 @@
             {
               "id": "ladder-1",
               "name": "Ladder 1",
+              "stopwatch": true
+            },
+            {
+              "id": "ladder-10-to-1",
+              "name": "Ladder 10 to 1",
+              "stopwatch": true
+            },
+            {
+              "id": "ladder-hinge",
+              "name": "Hinge Ladder",
+              "stopwatch": true
+            },
+            {
+              "id": "ladder-thruster",
+              "name": "Thruster Ladder",
               "stopwatch": true
             }
           ]

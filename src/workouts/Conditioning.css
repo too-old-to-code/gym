@@ -70,6 +70,14 @@
   min-height: 0;
 }
 
+.gd-group[data-active="false"] {
+  opacity: 0.4;
+}
+
+.gd-group[data-active="true"] {
+  box-shadow: 0 0 0 calc(0.4 * var(--u)) #67e8f9;
+}
+
 .gd-group-title {
   display: flex;
   align-items: baseline;

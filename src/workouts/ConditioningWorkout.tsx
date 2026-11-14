@@ -33,6 +33,8 @@ type Props = WorkoutProps & {
   startMs?: number;
   /** An EMOM: show a repeating countdown of this length and count the rounds. Used until the server sends its own. */
   intervalMs?: number;
+  /** An EMOM of this many rounds: the count reads "3/16", the clock reads "Done" at the end, and the block for the current minute stands out. */
+  totalRounds?: number;
   /** A countdown turns red once this little time is left. */
   urgentMs?: number;
   sections: Section[];
@@ -50,6 +52,7 @@ export function ConditioningWorkout({
   direction = "up",
   startMs = 0,
   intervalMs: defaultIntervalMs,
+  totalRounds,
   urgentMs,
   sections,
   sectionsLabel,
@@ -59,6 +62,9 @@ export function ConditioningWorkout({
   const ms = useClock(timer) ?? startMs;
   const intervalMs = timer?.intervalMs ?? defaultIntervalMs;
   const interval = intervalMs ? intervalClock(ms, intervalMs) : null;
+  const finished = interval !== null && totalRounds !== undefined && interval.rounds >= totalRounds;
+  const activeSection =
+    interval && totalRounds !== undefined && !finished && sections.length > 1 ? interval.rounds % sections.length : null;
   const urgent = !interval && direction === "down" && urgentMs !== undefined && ms <= urgentMs;
   return (
     <main className="gd-root">
@@ -78,12 +84,14 @@ export function ConditioningWorkout({
         <div className="gd-timer" data-urgent={String(urgent)}>
           <h2 className="gd-label">{clockLabel}</h2>
           <p className="gd-timer-clock">
-            {interval ? formatClock(interval.leftMs, "down") : formatClock(ms, timer?.direction ?? direction)}
+            {finished ? "Done" : interval ? formatClock(interval.leftMs, "down") : formatClock(ms, timer?.direction ?? direction)}
           </p>
           {interval && (
             <p className="gd-rounds">
               <span className="gd-label">Rounds</span>
-              <span className="gd-rounds-count">{interval.rounds}</span>
+              <span className="gd-rounds-count">
+                {totalRounds === undefined ? interval.rounds : `${Math.min(interval.rounds, totalRounds)}/${totalRounds}`}
+              </span>
             </p>
           )}
         </div>
@@ -97,6 +105,7 @@ export function ConditioningWorkout({
             <section
               key={section.title ?? `section-${si}`}
               className={`gd-card gd-sq gd-moves${section.title ? " gd-group" : ""}`}
+              data-active={activeSection === null ? undefined : String(activeSection === si)}
               style={
                 {
                   flexGrow: section.moves.length,

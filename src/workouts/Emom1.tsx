@@ -12,10 +12,11 @@ export function Emom1({ timer }: WorkoutProps) {
     <ConditioningWorkout
       heading="EMOM"
       skill="Slow toes to bar"
-      clockLabel="Every minute on the minute"
+      clockLabel="20 min, every minute on the minute"
       direction="up"
       startMs={0}
       intervalMs={60_000}
+      totalRounds={20}
       sections={[{ moves: MOVES }]}
       sectionsLabel="Each minute"
       timer={timer}
