@@ -3,7 +3,8 @@ import { act, cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import rawConfig from "../../config/gym.config.json";
 import type { Config } from "../../shared/config";
-import { LIBRARY, libraryPages } from "../../src/workouts/library";
+import { LIBRARY } from "../../shared/workouts";
+import { libraryPages } from "../../src/workouts/library";
 import { workoutRegistry } from "../../src/workouts/registry";
 
 afterEach(() => {

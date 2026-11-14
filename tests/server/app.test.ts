@@ -128,6 +128,14 @@ describe("gym server", () => {
     expect(await res.json()).toEqual(config);
   });
 
+  test("GET /api/workouts returns the content of every timed and strength workout", async () => {
+    const port = await start();
+    const res = await fetch(`http://localhost:${port}/api/workouts`);
+    const content = (await res.json()) as { timed: Record<string, { sections: unknown[] }>; strength: Record<string, { lifts: unknown[] }> };
+    expect(content.timed["emom-swing-row"].sections).toHaveLength(2);
+    expect(content.strength["strength-a"].lifts).toHaveLength(5);
+  });
+
   test("restarted server sends the stored selection", async () => {
     const first = await start();
     const a = await connect(first);

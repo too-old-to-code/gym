@@ -1,24 +1,12 @@
 import type { CSSProperties } from "react";
 import { formatClock, intervalClock, type TimerDirection } from "../../shared/timer";
+import type { Banner, Section } from "../../shared/workouts";
 import { useClock } from "../lib/useGymSocket";
 import type { WorkoutProps } from "./registry";
 import "./StrengthA.css";
 import "./Conditioning.css";
 
-/** `amount` is left out when the block's heading carries it, such as "21-15-9". */
-export type Move = { name: string; amount?: number | string; unit?: string; /** A short note under the name. */ detail?: string };
-
-/** A block of movements, optionally under one heading that applies to all of them. */
-export type Section = {
-  title?: string;
-  note?: string;
-  moves: Move[];
-  /** Draw a down arrow leading from each movement into the next. */
-  flow?: boolean;
-};
-
-/** A line under the blocks with an arrow, such as "Then back up". */
-export type Banner = { text: string; arrow: "up" | "down" };
+export type { Banner, Move, Section } from "../../shared/workouts";
 
 type Props = WorkoutProps & {
   /** Small heading at the top of the page, such as "AMRAP". */

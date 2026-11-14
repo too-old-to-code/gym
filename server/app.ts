@@ -5,6 +5,7 @@ import { extname, join, resolve, sep } from "node:path";
 import { WebSocketServer, type WebSocket } from "ws";
 import { isSelectionAllowed, type Config } from "../shared/config";
 import { parseClientMessage, type Selection, type ServerMessage } from "../shared/protocol";
+import { WORKOUT_CONTENT } from "../shared/workouts";
 import { applyTimerAction, idleMedia, idleStopwatch, idleTimer, snapshotTimer, type TimerState } from "../shared/timer";
 import { createSelectionStore } from "./store";
 
@@ -115,6 +116,11 @@ export function createGymServer({ config, stateFile, staticDir, heartbeatMs = 15
     if (req.method === "GET" && path === "/api/config") {
       res.writeHead(200, { "content-type": "application/json" });
       res.end(JSON.stringify(config));
+      return;
+    }
+    if (req.method === "GET" && path === "/api/workouts") {
+      res.writeHead(200, { "content-type": "application/json" });
+      res.end(JSON.stringify(WORKOUT_CONTENT));
       return;
     }
     const file = req.method === "GET" ? resolveFile(path) : null;

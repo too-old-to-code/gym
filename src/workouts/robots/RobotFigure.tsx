@@ -7,6 +7,7 @@ import * as backext from "./backext";
 import * as deadlift from "./deadlift";
 import * as nordic from "./nordic";
 import * as legextension from "./legextension";
+import type { Movement } from "../../../shared/workouts";
 import "./RobotFigure.css";
 
 const movements = {
@@ -18,9 +19,9 @@ const movements = {
   deadlift: { ...deadlift, label: "Deadlifts" },
   nordic: { ...nordic, label: "Nordics" },
   legextension: { ...legextension, label: "Leg extensions" },
-};
+} satisfies Record<Movement, unknown>;
 
-export type Movement = keyof typeof movements;
+export type { Movement };
 
 // Outline width in drawing units, so lines stay about 1px at the intended size. Cheaper than
 // vector-effect: non-scaling-stroke, which makes the browser recompute every stroke each frame.

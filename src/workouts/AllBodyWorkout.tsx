@@ -1,17 +1,7 @@
 import type { CSSProperties } from "react";
-import { RobotFigure, type Movement } from "./robots/RobotFigure";
+import type { Lift } from "../../shared/workouts";
+import { RobotFigure } from "./robots/RobotFigure";
 import "./StrengthA.css";
-
-export type Lift = {
-  name: string;
-  kit: string;
-  sets: number;
-  reps: number;
-  /** Robot demonstrating the lift; omit when there is no figure yet. */
-  movement?: Movement;
-  /** Added weight in kg shown on the robot. */
-  load?: number;
-};
 
 const COLOURS = ["#67E8F9", "#5EEAD4", "#C4B5FD", "#FCD34D", "#93C5FD"];
 

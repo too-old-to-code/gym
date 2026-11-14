@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
 import { act, cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
-import { RoundsForTime1 } from "../../src/workouts/RoundsForTime1";
 import { workoutRegistry } from "../../src/workouts/registry";
+
+const RoundsForTime1 = workoutRegistry["rft-1"];
 
 afterEach(() => {
   cleanup();
