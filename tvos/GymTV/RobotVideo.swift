@@ -11,7 +11,10 @@ struct RobotVideo: View {
     var body: some View {
         ZStack {
             Theme.figure
-            if let url = name.flatMap({ Bundle.main.url(forResource: $0, withExtension: "mp4") }) { LoopingPlayer(url: url) }
+            if let url = name.flatMap({ Bundle.main.url(forResource: $0, withExtension: "mp4") }) {
+                // Keyed by file: the player is built once, so a reused row must be rebuilt to switch videos.
+                LoopingPlayer(url: url).id(url)
+            }
         }
         .clipShape(RoundedRectangle(cornerRadius: 1.4 * u))
     }
