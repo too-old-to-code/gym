@@ -1,9 +1,10 @@
 // Renders each strength lift's robot animation to a looping mp4 for the tvOS app, which cannot run the SVG drawings.
 // Run: npx tsx scripts/render-robots.ts   (needs ffmpeg)
 import { spawn } from "node:child_process";
-import { mkdirSync, readFileSync } from "node:fs";
+import { mkdirSync } from "node:fs";
 import { Resvg } from "@resvg/resvg-js";
 import { STRENGTH } from "../shared/workouts";
+import { robotSvg } from "./robot-svg";
 import * as backext from "../src/workouts/robots/backext";
 import * as bench from "../src/workouts/robots/bench";
 import * as deadlift from "../src/workouts/robots/deadlift";
@@ -24,23 +25,9 @@ const BACKGROUND = "#fbf8f2";
 let clock = 0;
 performance.now = () => clock;
 
-/** The web stylesheet with its custom properties filled in, since the rasteriser does not read var(). */
-function flatCss(strokeWidth: number): string {
-  const vars: Record<string, string> = {
-    "--body": "#6fb1e8", "--deck": "#a4d3f5", "--line": "#1f2a3a", "--detail": "rgba(20, 35, 60, .38)",
-  };
-  return readFileSync(new URL("../src/workouts/robots/RobotFigure.css", import.meta.url), "utf8")
-    .replace(/var\(--sw, 1\.5\)/g, String(strokeWidth))
-    .replace(/var\((--[a-z]+)\)/g, (_, name) => vars[name])
-    .replace(/background: #fbf8f2;/, "");
-}
-
 async function render(key: string, movement: keyof typeof modules, load?: number) {
   const { viewBox, createRobot } = modules[movement];
-  const [x, y, w, h] = viewBox.split(" ").map(Number);
-  const css = flatCss(h / 205);
   const robot = createRobot({ reducedMotion: false, load });
-  const height = Math.round((WIDTH * h) / w);
 
   const ffmpeg = spawn("ffmpeg", [
     "-y", "-loglevel", "error", "-f", "image2pipe", "-framerate", String(FPS), "-i", "-",
@@ -52,9 +39,7 @@ async function render(key: string, movement: keyof typeof modules, load?: number
   });
 
   const frame = () => {
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${viewBox}" width="${WIDTH}" height="${height}">
-<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${BACKGROUND}"/><style>${css}</style><g class="robot-fig">${robot.scene()}</g></svg>`;
-    ffmpeg.stdin.write(new Resvg(svg).render().asPng());
+    ffmpeg.stdin.write(new Resvg(robotSvg(viewBox, robot.scene(), { width: WIDTH, background: BACKGROUND })).render().asPng());
   };
 
   frame();
