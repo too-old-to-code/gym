@@ -1,4 +1,7 @@
 name: GymTV
+include:
+  - path: local.yml
+    required: false
 options:
   bundleIdPrefix: co.learntoreadthai
   deploymentTarget:

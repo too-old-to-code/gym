@@ -92,6 +92,14 @@ struct Lift: Codable, Hashable {
     let kit: String
     let sets: Int
     let reps: Int
+    let movement: String?
+    let load: Double?
+
+    /// The bundled robot video for this lift. Keep in step with `videoKey` in `scripts/render-robots.ts`.
+    var videoName: String? {
+        guard let movement else { return nil }
+        return load.map { "\(movement)-\(Int($0))" } ?? movement
+    }
 }
 
 struct StrengthWorkout: Codable, Hashable { let title: String; let lifts: [Lift] }
