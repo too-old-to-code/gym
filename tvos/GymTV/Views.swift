@@ -111,7 +111,7 @@ struct TimedWorkoutView: View {
     /// The countdown sits on the page itself, not in a card.
     private func clock(_ label: String, _ state: ClockState) -> some View {
         VStack(spacing: 0.6 * u) {
-            Caption(text: label)
+            Caption(text: state.gettingReady ? "Get ready" : label)
             Text(state.text)
                 .font(.system(size: 26 * u, weight: .bold).monospacedDigit()).tracking(-0.04 * 26 * u)
                 .lineLimit(1).minimumScaleFactor(0.5)

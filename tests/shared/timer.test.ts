@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { applyTimerAction, clockNow, formatClock, idleMedia, idleStopwatch, idleTimer, intervalClock, snapshotTimer } from "../../shared/timer";
+import { LEAD_IN_MS as LEAD, applyTimerAction, clockNow, formatClock, leadInLeft, idleMedia, idleStopwatch, idleTimer, intervalClock, snapshotTimer } from "../../shared/timer";
 
 const MIN = 60_000;
 
@@ -10,21 +10,44 @@ describe("timer model", () => {
 
   test("start runs and counts down with the clock", () => {
     const t = applyTimerAction(idleTimer(20 * MIN), "start", 1000);
-    expect(snapshotTimer(t, 1000)).toMatchObject({ status: "running", ms: 20 * MIN });
-    expect(snapshotTimer(t, 6000)).toMatchObject({ status: "running", ms: 20 * MIN - 5000 });
+    expect(snapshotTimer(t, 1000 + LEAD)).toMatchObject({ status: "running", ms: 20 * MIN });
+    expect(snapshotTimer(t, 6000 + LEAD)).toMatchObject({ status: "running", ms: 20 * MIN - 5000 });
+  });
+
+  test("start gives a get-ready countdown before the clock moves", () => {
+    const t = applyTimerAction(idleTimer(20 * MIN), "start", 1000);
+    expect(snapshotTimer(t, 1000)).toMatchObject({ status: "running", ms: 20 * MIN, leadMs: LEAD });
+    expect(snapshotTimer(t, 4000)).toMatchObject({ status: "running", ms: 20 * MIN, leadMs: LEAD - 3000 });
+    expect(snapshotTimer(t, 1000 + LEAD)).not.toHaveProperty("leadMs");
+  });
+
+  test("stopping during the get-ready countdown cancels it, and start gives a fresh one", () => {
+    let t = applyTimerAction(idleTimer(20 * MIN), "start", 0);
+    t = applyTimerAction(t, "stop", 4000);
+    expect(snapshotTimer(t, 9000)).toEqual({ status: "paused", direction: "down", totalMs: 20 * MIN, ms: 20 * MIN });
+    t = applyTimerAction(t, "start", 10_000);
+    expect(snapshotTimer(t, 10_000)).toMatchObject({ leadMs: LEAD });
+  });
+
+  test("resuming a paused timer starts straight away", () => {
+    let t = applyTimerAction(idleTimer(20 * MIN), "start", 0);
+    t = applyTimerAction(t, "stop", LEAD + 5000);
+    t = applyTimerAction(t, "start", 50_000);
+    expect(snapshotTimer(t, 50_000)).not.toHaveProperty("leadMs");
+    expect(snapshotTimer(t, 52_000)).toMatchObject({ ms: 20 * MIN - 7000 });
   });
 
   test("stop pauses and holds the remaining time", () => {
     let t = applyTimerAction(idleTimer(20 * MIN), "start", 0);
-    t = applyTimerAction(t, "stop", 5000);
+    t = applyTimerAction(t, "stop", 5000 + LEAD);
     expect(snapshotTimer(t, 99_000)).toMatchObject({ status: "paused", ms: 20 * MIN - 5000 });
   });
 
   test("start after stop resumes from where it paused", () => {
     let t = applyTimerAction(idleTimer(20 * MIN), "start", 0);
-    t = applyTimerAction(t, "stop", 5000);
-    t = applyTimerAction(t, "start", 10_000);
-    expect(snapshotTimer(t, 12_000)).toMatchObject({ status: "running", ms: 20 * MIN - 7000 });
+    t = applyTimerAction(t, "stop", 5000 + LEAD);
+    t = applyTimerAction(t, "start", 30_000);
+    expect(snapshotTimer(t, 32_000)).toMatchObject({ status: "running", ms: 20 * MIN - 7000 });
   });
 
   test("reset returns to idle with the full time, from any state", () => {
@@ -40,7 +63,7 @@ describe("timer model", () => {
 
   test("reaching zero is done, never negative, and start does nothing until reset", () => {
     let t = applyTimerAction(idleTimer(10_000), "start", 0);
-    expect(snapshotTimer(t, 10_000)).toMatchObject({ status: "done", ms: 0 });
+    expect(snapshotTimer(t, 10_000 + LEAD)).toMatchObject({ status: "done", ms: 0 });
     expect(snapshotTimer(t, 50_000)).toMatchObject({ status: "done", ms: 0 });
     t = applyTimerAction(t, "start", 60_000);
     expect(snapshotTimer(t, 61_000).status).toBe("done");
@@ -57,6 +80,15 @@ describe("client countdown", () => {
 
   test("a running snapshot keeps counting down from when it arrived", () => {
     expect(clockNow(snap("running", 60_000), 1000, 4000)).toBe(57_000);
+  });
+
+  test("a snapshot in its lead-in holds the clock, then counts down from the end of it", () => {
+    const lead = { ...snap("running", 60_000), leadMs: 10_000 };
+    expect(clockNow(lead, 1000, 4000)).toBe(60_000);
+    expect(leadInLeft(lead, 1000, 4000)).toBe(7000);
+    expect(clockNow(lead, 1000, 13_000)).toBe(58_000);
+    expect(leadInLeft(lead, 1000, 13_000)).toBe(0);
+    expect(leadInLeft(snap("running", 60_000), 1000, 4000)).toBe(0);
   });
   test("it never goes below zero", () => {
     expect(clockNow(snap("running", 1000), 0, 9000)).toBe(0);
@@ -85,16 +117,16 @@ describe("stopwatch (counts up)", () => {
 
   test("runs upwards with the clock and never finishes", () => {
     const t = applyTimerAction(idleStopwatch(), "start", 1000);
-    expect(snapshotTimer(t, 6000)).toMatchObject({ status: "running", direction: "up", ms: 5000 });
-    expect(snapshotTimer(t, 1000 + 3 * 3_600_000)).toMatchObject({ status: "running", ms: 3 * 3_600_000 });
+    expect(snapshotTimer(t, 6000 + LEAD)).toMatchObject({ status: "running", direction: "up", ms: 5000 });
+    expect(snapshotTimer(t, 1000 + LEAD + 3 * 3_600_000)).toMatchObject({ status: "running", ms: 3 * 3_600_000 });
   });
 
   test("stop holds the elapsed time and start carries on from it", () => {
     let t = applyTimerAction(idleStopwatch(), "start", 0);
-    t = applyTimerAction(t, "stop", 5000);
+    t = applyTimerAction(t, "stop", 5000 + LEAD);
     expect(snapshotTimer(t, 99_000)).toMatchObject({ status: "paused", ms: 5000 });
-    t = applyTimerAction(t, "start", 10_000);
-    expect(snapshotTimer(t, 12_000)).toMatchObject({ status: "running", ms: 7000 });
+    t = applyTimerAction(t, "start", 30_000);
+    expect(snapshotTimer(t, 32_000)).toMatchObject({ status: "running", ms: 7000 });
   });
 
   test("reset goes back to zero", () => {
@@ -131,9 +163,9 @@ describe("interval stopwatch (every minute on the minute)", () => {
     let t = idleStopwatch(MIN);
     expect(snapshotTimer(t, 0)).toEqual({ status: "idle", direction: "up", totalMs: 0, ms: 0, intervalMs: MIN });
     t = applyTimerAction(t, "start", 0);
-    expect(snapshotTimer(t, 5000)).toMatchObject({ status: "running", ms: 5000, intervalMs: MIN });
-    t = applyTimerAction(t, "stop", 5000);
-    expect(snapshotTimer(t, 9000)).toMatchObject({ status: "paused", ms: 5000, intervalMs: MIN });
+    expect(snapshotTimer(t, 5000 + LEAD)).toMatchObject({ status: "running", ms: 5000, intervalMs: MIN });
+    t = applyTimerAction(t, "stop", 5000 + LEAD);
+    expect(snapshotTimer(t, 9000 + LEAD)).toMatchObject({ status: "paused", ms: 5000, intervalMs: MIN });
     expect(snapshotTimer(applyTimerAction(t, "reset", 9000), 9000)).toMatchObject({ status: "idle", ms: 0, intervalMs: MIN });
   });
 
@@ -152,6 +184,11 @@ describe("interval stopwatch (every minute on the minute)", () => {
 
 
 describe("media controls (play, pause, reset a video)", () => {
+  test("a video plays at once, with no get-ready countdown", () => {
+    const t = applyTimerAction(idleMedia(), "start", 0);
+    expect(snapshotTimer(t, 0)).not.toHaveProperty("leadMs");
+  });
+
   test("carries its kind through play, pause and reset", () => {
     let t = idleMedia();
     expect(snapshotTimer(t, 0)).toMatchObject({ status: "idle", kind: "media" });

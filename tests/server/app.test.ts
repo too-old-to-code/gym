@@ -1,3 +1,4 @@
+import { LEAD_IN_MS } from "../../shared/timer";
 import { chmodSync, mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { connect as tcpConnect, type AddressInfo } from "node:net";
 import { tmpdir } from "node:os";
@@ -236,6 +237,7 @@ describe("gym server heartbeat", () => {
 
 describe("gym server timer", () => {
   const MIN = 60_000;
+  const LEAD = LEAD_IN_MS;
   const withClock = () => {
     const clock = { now: 1_000_000 };
     return { clock, now: () => clock.now };
@@ -273,10 +275,10 @@ describe("gym server timer", () => {
     await b.next();
 
     timerMsg(a, "start");
-    expect((await a.next()).timer).toMatchObject({ status: "running", ms: 20 * MIN });
+    expect((await a.next()).timer).toMatchObject({ status: "running", ms: 20 * MIN, leadMs: LEAD });
     expect((await b.next()).timer).toMatchObject({ status: "running" });
 
-    clock.now += 5000;
+    clock.now += LEAD + 5000;
     timerMsg(b, "stop");
     expect((await a.next()).timer).toEqual({ status: "paused", direction: "down", totalMs: 20 * MIN, ms: 20 * MIN - 5000 });
     await b.next();
@@ -294,7 +296,7 @@ describe("gym server timer", () => {
     await a.next();
     timerMsg(a, "start");
     await a.next();
-    clock.now += 30_000;
+    clock.now += LEAD + 30_000;
     const b = await connect(port);
     expect((await b.next()).timer).toEqual({ status: "running", direction: "down", totalMs: 20 * MIN, ms: 20 * MIN - 30_000 });
   });
@@ -336,7 +338,7 @@ describe("gym server timer", () => {
     expect((await a.next()).timer).toEqual({ status: "idle", direction: "up", totalMs: 0, ms: 0 });
     timerMsg(a, "start");
     await a.next();
-    clock.now += 90_000;
+    clock.now += LEAD + 90_000;
     const b = await connect(port);
     expect((await b.next()).timer).toEqual({ status: "running", direction: "up", totalMs: 0, ms: 90_000 });
     timerMsg(a, "stop");
@@ -354,7 +356,7 @@ describe("gym server timer", () => {
     expect((await a.next()).timer).toEqual({ status: "idle", direction: "up", totalMs: 0, ms: 0, intervalMs: 60_000 });
     timerMsg(a, "start");
     await a.next();
-    clock.now += 150_000;
+    clock.now += LEAD + 150_000;
     const b = await connect(port);
     expect((await b.next()).timer).toEqual({ status: "running", direction: "up", totalMs: 0, ms: 150_000, intervalMs: 60_000 });
   });

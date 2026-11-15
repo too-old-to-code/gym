@@ -5,8 +5,14 @@ enum ClockMath {
     /// The clock on screen, from a snapshot received at `receivedAt`.
     static func now(_ s: TimerSnapshot, receivedAt: Date, at now: Date) -> Double {
         guard s.status == .running else { return s.ms }
-        let elapsed = now.timeIntervalSince(receivedAt) * 1000
+        let elapsed = max(0, now.timeIntervalSince(receivedAt) * 1000 - (s.leadMs ?? 0))
         return s.direction == .up ? s.ms + elapsed : max(0, s.ms - elapsed)
+    }
+
+    /// Milliseconds of get-ready countdown still to go; 0 once the clock is moving.
+    static func leadLeft(_ s: TimerSnapshot, receivedAt: Date, at now: Date) -> Double {
+        guard s.status == .running else { return 0 }
+        return max(0, (s.leadMs ?? 0) - now.timeIntervalSince(receivedAt) * 1000)
     }
 
     /// m:ss. A countdown rounds up so it reads 0:00 only when time is truly out; a stopwatch rounds down.
@@ -26,6 +32,8 @@ enum ClockMath {
 /// What the clock card shows for a workout at a moment in time: the same rules as `ConditioningWorkout.tsx`.
 struct ClockState {
     let text: String
+    /// True during the get-ready countdown, when `text` is the seconds left.
+    let gettingReady: Bool
     let urgent: Bool
     let roundsText: String?
     /// For an EMOM with several blocks: the block for the current minute. Nil when no block stands out.
@@ -42,11 +50,15 @@ struct ClockState {
         let total = kind == "emom" ? Int(minutes) : nil
         let finished = interval != nil && total != nil && interval!.rounds >= total!
 
-        if finished { text = "Done" }
+        let lead = timer.map { ClockMath.leadLeft($0, receivedAt: receivedAt, at: now) } ?? 0
+        gettingReady = lead > 0
+
+        if gettingReady { text = String(Int((lead / 1000).rounded(.up))) }
+        else if finished { text = "Done" }
         else if let interval { text = ClockMath.format(interval.leftMs, direction: .down) }
         else { text = ClockMath.format(ms, direction: direction) }
 
-        urgent = interval == nil && direction == .down && kind == "amrap" && ms <= 30_000
+        urgent = !gettingReady && interval == nil && direction == .down && kind == "amrap" && ms <= 30_000
         if let interval {
             roundsText = total.map { "\(min(interval.rounds, $0))/\($0)" } ?? "\(interval.rounds)"
         } else { roundsText = nil }

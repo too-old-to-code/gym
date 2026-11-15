@@ -1,7 +1,7 @@
 import type { CSSProperties } from "react";
 import { formatClock, intervalClock, type TimerDirection } from "../../shared/timer";
 import type { Banner, Section } from "../../shared/workouts";
-import { useClock } from "../lib/useGymSocket";
+import { leadInNow, useClock } from "../lib/useGymSocket";
 import type { WorkoutProps } from "./registry";
 import "./StrengthA.css";
 import "./Conditioning.css";
@@ -48,6 +48,7 @@ export function ConditioningWorkout({
   timer = null,
 }: Props) {
   const ms = useClock(timer) ?? startMs;
+  const leadMs = leadInNow(timer);
   const intervalMs = timer?.intervalMs ?? defaultIntervalMs;
   const interval = intervalMs ? intervalClock(ms, intervalMs) : null;
   const finished = interval !== null && totalRounds !== undefined && interval.rounds >= totalRounds;
@@ -69,10 +70,10 @@ export function ConditioningWorkout({
         )}
 
         {clockLabel !== undefined && (
-        <div className="gd-timer" data-urgent={String(urgent)}>
-          <h2 className="gd-label">{clockLabel}</h2>
+        <div className="gd-timer" data-urgent={String(urgent)} data-lead={String(leadMs > 0)}>
+          <h2 className="gd-label">{leadMs > 0 ? "Get ready" : clockLabel}</h2>
           <p className="gd-timer-clock">
-            {finished ? "Done" : interval ? formatClock(interval.leftMs, "down") : formatClock(ms, timer?.direction ?? direction)}
+            {leadMs > 0 ? Math.ceil(leadMs / 1000) : finished ? "Done" : interval ? formatClock(interval.leftMs, "down") : formatClock(ms, timer?.direction ?? direction)}
           </p>
           {interval && (
             <p className="gd-rounds">

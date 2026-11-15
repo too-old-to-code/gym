@@ -17,6 +17,8 @@ struct TimerSnapshot: Codable, Equatable {
     let ms: Double
     let intervalMs: Double?
     let kind: String?
+    /// Set while the get-ready countdown runs: milliseconds before the clock starts to move.
+    let leadMs: Double?
 }
 
 /// Every message the server sends: a `state` update or a `hb` heartbeat.

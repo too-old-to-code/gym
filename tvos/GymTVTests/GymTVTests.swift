@@ -8,7 +8,7 @@ final class ClockTests: XCTestCase {
                             sections: Array(repeating: s, count: sections), sectionsLabel: "", banner: nil)
     }
     private func paused(_ ms: Double) -> TimerSnapshot {
-        TimerSnapshot(status: .paused, direction: .up, totalMs: 0, ms: ms, intervalMs: 60_000, kind: nil)
+        TimerSnapshot(status: .paused, direction: .up, totalMs: 0, ms: ms, intervalMs: 60_000, kind: nil, leadMs: nil)
     }
     private func state(_ w: TimedWorkout, _ t: TimerSnapshot?) -> ClockState {
         ClockState(workout: w, timer: t, receivedAt: Date(), now: Date())
@@ -39,15 +39,30 @@ final class ClockTests: XCTestCase {
         let w = TimedWorkout(heading: "A", skill: nil, clockLabel: "c", clock: Clock(kind: "amrap", minutes: 12),
                              sections: [], sectionsLabel: "", banner: nil)
         XCTAssertEqual(state(w, nil).text, "12:00")
-        let t = TimerSnapshot(status: .paused, direction: .down, totalMs: 720_000, ms: 20_000, intervalMs: nil, kind: nil)
+        let t = TimerSnapshot(status: .paused, direction: .down, totalMs: 720_000, ms: 20_000, intervalMs: nil, kind: nil, leadMs: nil)
         XCTAssertTrue(state(w, t).urgent)
     }
 
     func testRunningStopwatchAdvancesWithTime() {
-        let t = TimerSnapshot(status: .running, direction: .up, totalMs: 0, ms: 5_000, intervalMs: nil, kind: nil)
+        let t = TimerSnapshot(status: .running, direction: .up, totalMs: 0, ms: 5_000, intervalMs: nil, kind: nil, leadMs: nil)
         let received = Date(timeIntervalSince1970: 1000)
         let ms = ClockMath.now(t, receivedAt: received, at: received.addingTimeInterval(61))
         XCTAssertEqual(ClockMath.format(ms, direction: .up), "1:06")
+    }
+}
+
+final class LeadInTests: XCTestCase {
+    func testGetReadyCountsDownThenClockStarts() {
+        let w = TimedWorkout(heading: "A", skill: nil, clockLabel: "c", clock: Clock(kind: "amrap", minutes: 12),
+                             sections: [], sectionsLabel: "", banner: nil)
+        let t = TimerSnapshot(status: .running, direction: .down, totalMs: 720_000, ms: 720_000, intervalMs: nil, kind: nil, leadMs: 10_000)
+        let received = Date(timeIntervalSince1970: 1000)
+        let early = ClockState(workout: w, timer: t, receivedAt: received, now: received.addingTimeInterval(3))
+        XCTAssertTrue(early.gettingReady)
+        XCTAssertEqual(early.text, "7")
+        let later = ClockState(workout: w, timer: t, receivedAt: received, now: received.addingTimeInterval(15))
+        XCTAssertFalse(later.gettingReady)
+        XCTAssertEqual(later.text, "11:55")
     }
 }
 

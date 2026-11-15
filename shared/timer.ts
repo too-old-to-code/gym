@@ -8,6 +8,7 @@ export type TimerDirection = "down" | "up";
  * `totalMs` is the starting time for a countdown, and 0 for a stopwatch.
  * `intervalMs` marks a stopwatch that screens show as a repeating countdown with a round count (an EMOM).
  * `kind: "media"` marks a video: only the status matters (playing, paused or at the start).
+ * `leadMs` is set while a started timer is still in its get-ready countdown: the time before the clock begins to move.
  */
 export type TimerSnapshot = {
   status: TimerStatus;
@@ -16,9 +17,13 @@ export type TimerSnapshot = {
   ms: number;
   intervalMs?: number;
   kind?: "media";
+  leadMs?: number;
 };
 
-/** The server's own record; `startedAt` is set only while running. */
+/** The get-ready countdown between pressing start and the clock moving. */
+export const LEAD_IN_MS = 10_000;
+
+/** The server's own record; `startedAt` is set only while running, and is in the future during the lead-in. */
 export type TimerState = TimerSnapshot & { startedAt?: number };
 
 export const TIMER_ACTIONS: readonly TimerAction[] = ["start", "stop", "reset"];
@@ -49,19 +54,25 @@ export function snapshotTimer(t: TimerState, now: number): TimerSnapshot {
     ...(t.kind ? { kind: t.kind } : {}),
   };
   if (t.status !== "running") return { ...base, status: t.status, ms: t.ms };
-  const elapsed = now - (t.startedAt ?? now);
+  const startedAt = t.startedAt ?? now;
+  if (now < startedAt) return { ...base, status: "running", ms: t.ms, leadMs: startedAt - now };
+  const elapsed = now - startedAt;
   if (t.direction === "up") return { ...base, status: "running", ms: t.ms + elapsed };
   const ms = Math.max(0, t.ms - elapsed);
   return { ...base, status: ms === 0 ? "done" : "running", ms };
 }
 
 export function applyTimerAction(t: TimerState, action: TimerAction, now: number): TimerState {
-  const current = snapshotTimer(t, now);
+  const { leadMs: _lead, ...current } = snapshotTimer(t, now);
   switch (action) {
     case "reset":
       return { ...current, status: "idle", ms: startMs(current) };
     case "start":
-      if (current.status === "idle" || current.status === "paused") return { ...current, status: "running", startedAt: now };
+      if (current.status === "idle" || current.status === "paused") {
+        // A timer that has not moved yet gets a get-ready countdown; a paused one resumes at once. A video just plays.
+        const fresh = current.kind !== "media" && current.ms === startMs(current);
+        return { ...current, status: "running", startedAt: fresh ? now + LEAD_IN_MS : now };
+      }
       return { ...current, startedAt: t.status === "running" ? t.startedAt : undefined };
     case "stop":
       if (current.status === "running") return { ...current, status: "paused" };
@@ -72,8 +83,14 @@ export function applyTimerAction(t: TimerState, action: TimerAction, now: number
 /** The clock on a client, from a snapshot received at `receivedAt`. */
 export function clockNow(snapshot: TimerSnapshot, receivedAt: number, now: number): number {
   if (snapshot.status !== "running") return snapshot.ms;
-  const elapsed = now - receivedAt;
+  const elapsed = Math.max(0, now - receivedAt - (snapshot.leadMs ?? 0));
   return snapshot.direction === "up" ? snapshot.ms + elapsed : Math.max(0, snapshot.ms - elapsed);
+}
+
+/** Milliseconds of get-ready countdown still to go; 0 once the clock is moving. */
+export function leadInLeft(snapshot: TimerSnapshot, receivedAt: number, now: number): number {
+  if (snapshot.status !== "running") return 0;
+  return Math.max(0, (snapshot.leadMs ?? 0) - (now - receivedAt));
 }
 
 /** m:ss. A countdown rounds up, so it reads 0:00 only when time is truly out; a stopwatch rounds down. */

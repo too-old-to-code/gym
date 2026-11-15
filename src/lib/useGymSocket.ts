@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Selection } from "../../shared/protocol";
-import { clockNow, type TimerAction, type TimerSnapshot } from "../../shared/timer";
+import { clockNow, leadInLeft, type TimerAction, type TimerSnapshot } from "../../shared/timer";
 
 /** A timer snapshot plus when it reached this screen, so the countdown can carry on from there. */
 export type TimerView = TimerSnapshot & { receivedAt: number };
@@ -111,4 +111,9 @@ export function useClock(timer: TimerView | null): number | null {
     return () => clearInterval(id);
   }, [running, timer]);
   return timer ? clockNow(timer, timer.receivedAt, Date.now()) : null;
+}
+
+/** Milliseconds of get-ready countdown left on `timer`; 0 when it is not in its lead-in. Call alongside `useClock`, which keeps it ticking. */
+export function leadInNow(timer: TimerView | null): number {
+  return timer ? leadInLeft(timer, timer.receivedAt, Date.now()) : 0;
 }

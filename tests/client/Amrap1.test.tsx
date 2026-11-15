@@ -47,6 +47,22 @@ describe("Amrap1", () => {
     expect(screen.getByText("19:55")).toBeTruthy();
   });
 
+  test("counts down the get-ready seconds, then starts the clock", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(10_000);
+    const timer = { status: "running" as const, direction: "down" as const, totalMs: 20 * 60_000, ms: 20 * 60_000, leadMs: 10_000, receivedAt: 10_000 };
+    const { container } = render(<Amrap1 timer={timer} />);
+    const clock = () => container.querySelector(".gd-timer-clock")?.textContent;
+    expect(screen.getByText("Get ready")).toBeTruthy();
+    expect(clock()).toBe("10");
+    act(() => vi.advanceTimersByTime(3000));
+    expect(clock()).toBe("7");
+    act(() => vi.advanceTimersByTime(7000));
+    expect(clock()).toBe("20:00");
+    act(() => vi.advanceTimersByTime(5000));
+    expect(clock()).toBe("19:55");
+  });
+
   test("shows 0:00 when time is up", () => {
     const timer = { status: "done" as const, direction: "down" as const, totalMs: 20 * 60_000, ms: 0, receivedAt: 0 };
     render(<Amrap1 timer={timer} />);
